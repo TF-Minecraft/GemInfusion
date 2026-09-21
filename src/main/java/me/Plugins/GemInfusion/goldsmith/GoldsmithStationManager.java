@@ -23,7 +23,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
-import io.lumine.mythic.lib.api.item.NBTItem;
 import me.Plugins.GemInfusion.Permissions;
 import me.Plugins.TLibs.TLibs;
 import me.Plugins.TLibs.Objects.Utils.IntCounter;
@@ -140,6 +139,9 @@ public class GoldsmithStationManager implements Listener {
 			return;
 		}
 
+		if (!isStationTool(player.getInventory().getItemInMainHand())) {
+			return;
+		}
 		e.setCancelled(true);
 		if (!Permissions.canUseGoldsmith(player)) {
 			if (!onCooldown(player)) {
@@ -324,7 +326,7 @@ public class GoldsmithStationManager implements Listener {
 				return;
 			}
 			if (finish == GoldsmithFeedback.LACKING_HITS) {
-				p.sendMessage("§7Hits: §e" + Math.round(station.getHitPercent()) + "%");
+				p.sendMessage("§7Keep working this piece before finishing");
 				p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
 				return;
 			}
@@ -337,19 +339,20 @@ public class GoldsmithStationManager implements Listener {
 			return;
 		}
 
-		NBTItem nbt = NBTItem.get(hand);
-		if (!nbt.hasType()) return;
-		GoldsmithHit hit = GoldsmithHitLoader.getByTool(nbt.getType() + "." + nbt.getString("MMOITEMS_ITEM_ID"));
+		GoldsmithHit hit = GoldsmithHitLoader.getByItem(hand);
 		if (hit == null) return;
 
 		markCooldown(p);
 		GoldsmithFeedback feedback = station.hit(hit);
 		switch (feedback) {
 			case SUCCESS:
-				markDirty();
 				p.sendTitle("§7Hits §e" + station.getTotalHitCount(), "", 5, 20, 5);
 				playWorkFx(station.getLoc(), Material.GOLD_BLOCK);
 				p.getWorld().playSound(station.getLoc(), Sound.BLOCK_ANVIL_USE, 0.4f, 1f);
+				if (station.markOverworkWarnedIfNeeded()) {
+					p.sendMessage(GoldsmithCache.hitOvershootWarnMessage);
+				}
+				markDirty();
 				break;
 			case LACKING_ITEMS:
 				p.sendMessage("§cYou have to add all the gold and the gem before working");
@@ -357,10 +360,6 @@ public class GoldsmithStationManager implements Listener {
 				break;
 			case WRONG_TYPE:
 				p.sendMessage("§cThis item cannot be used for goldsmithing hits");
-				p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-				break;
-			case NONE:
-				p.sendMessage("§cThis tool is not needed for this project");
 				p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
 				break;
 			default:
@@ -378,8 +377,7 @@ public class GoldsmithStationManager implements Listener {
 			p.sendMessage("§7gem: §e" + (station.hasGem() ? "1/1" : "0/1"));
 		}
 		p.sendMessage("§7Recipe: §e" + Math.round(station.getRecipePercent()) + "%");
-		p.sendMessage("§7Hits: §e" + Math.round(station.getHitPercent()) + "%");
-		p.sendMessage("§7Total: §e" + Math.round(station.getFinishedTotal()) + "%");
+		p.sendMessage("§7Hits: §e" + station.getTotalHitCount());
 		p.sendMessage("§7Left-click branding to finish");
 		p.sendMessage("§cSHIFT + LEFT CLICK with the branding tool to cancel the project!");
 	}
@@ -411,6 +409,11 @@ public class GoldsmithStationManager implements Listener {
 
 	private boolean isBranding(ItemStack item) {
 		return TLibs.getItemAPI().getChecker().checkItemWithPath(item, GoldsmithCache.brandingTool);
+	}
+
+	private boolean isStationTool(ItemStack item) {
+		if (item == null || item.getType().isAir()) return false;
+		return isBranding(item) || GoldsmithHitLoader.getByItem(item) != null;
 	}
 
 	private GoldsmithMaterial matchMaterial(ItemStack item) {

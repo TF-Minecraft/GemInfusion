@@ -4,6 +4,9 @@ import java.io.File;
 import java.util.LinkedHashMap;
 
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.inventory.ItemStack;
+
+import me.Plugins.TLibs.TLibs;
 
 public class GoldsmithHitLoader {
 
@@ -22,6 +25,16 @@ public class GoldsmithHitLoader {
 		if (path == null) return null;
 		for (GoldsmithHit hit : map.values()) {
 			if (path.equalsIgnoreCase(hit.getTool())) return hit;
+		}
+		return null;
+	}
+
+	public static GoldsmithHit getByItem(ItemStack item) {
+		if (item == null || item.getType().isAir()) return null;
+		for (GoldsmithHit hit : map.values()) {
+			if (TLibs.getItemAPI().getChecker().checkItemWithPath(item, hit.getTool())) {
+				return hit;
+			}
 		}
 		return null;
 	}

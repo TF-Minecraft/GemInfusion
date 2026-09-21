@@ -88,6 +88,16 @@ public final class GoldsmithMath {
 		return done;
 	}
 
+	public static int totalHitCurrentAll(Map<GoldsmithHit, IntCounter> current) {
+		if (current == null || current.isEmpty()) return 0;
+		int done = 0;
+		for (IntCounter counter : current.values()) {
+			if (counter == null) continue;
+			done += Math.max(0, counter.getCurrent());
+		}
+		return done;
+	}
+
 	public static double hitPercent(Map<GoldsmithHit, Integer> required, Map<GoldsmithHit, IntCounter> current) {
 		return hitPercentPenalized(required, current);
 	}

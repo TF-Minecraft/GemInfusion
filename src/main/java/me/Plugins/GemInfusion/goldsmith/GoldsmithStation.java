@@ -2,7 +2,6 @@ package me.Plugins.GemInfusion.goldsmith;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +22,7 @@ public class GoldsmithStation {
 	private final LinkedHashMap<GoldsmithHitType, IntCounter> hitTypes = new LinkedHashMap<>();
 	private final List<ItemStack> deposited = new ArrayList<>();
 	private final LinkedHashMap<GoldsmithMaterial, Integer> depositedByMaterial = new LinkedHashMap<>();
+	private boolean overworkWarned;
 
 	public GoldsmithStation(Location loc) {
 		this.loc = loc;
@@ -73,7 +73,32 @@ public class GoldsmithStation {
 	}
 
 	public int getTotalHitCount() {
-		return GoldsmithMath.totalHitCurrentRaw(GoldsmithMath.requiredHits(depositedByMaterial), hits);
+		return GoldsmithMath.totalHitCurrentAll(hits);
+	}
+
+	public int getTotalHitNeeded() {
+		return GoldsmithMath.totalHitNeeded(GoldsmithMath.requiredHits(depositedByMaterial));
+	}
+
+	public boolean isOverworkWarned() {
+		return overworkWarned;
+	}
+
+	/**
+	 * Marks the bench after the first swing that exceeds the configured overwork threshold.
+	 * @return true when this call should send the hint
+	 */
+	public boolean markOverworkWarnedIfNeeded() {
+		if (overworkWarned) return false;
+		double warn = GoldsmithCache.hitOvershootWarnPercent;
+		if (warn <= 0) return false;
+		int needed = getTotalHitNeeded();
+		if (needed <= 0) return false;
+		if (getTotalHitCount() > needed * (1.0 + warn / 100.0)) {
+			overworkWarned = true;
+			return true;
+		}
+		return false;
 	}
 
 	public double getRecipePercent() {
@@ -91,6 +116,7 @@ public class GoldsmithStation {
 		hitTypes.clear();
 		deposited.clear();
 		depositedByMaterial.clear();
+		overworkWarned = false;
 		gem = null;
 		if (project == null) return;
 
@@ -106,7 +132,7 @@ public class GoldsmithStation {
 	 * Needed values stay on the live project; only currents, deposited stacks, and gem are restored.
 	 */
 	public void applySavedProgress(Map<String, Integer> materials, Map<String, Integer> hitCounts,
-			List<ItemStack> savedDeposited, ItemStack savedGem) {
+			List<ItemStack> savedDeposited, ItemStack savedGem, boolean savedOverworkWarned) {
 		deposited.clear();
 		depositedByMaterial.clear();
 		gem = null;
@@ -131,11 +157,15 @@ public class GoldsmithStation {
 				GoldsmithHit hit = GoldsmithHitLoader.getByString(e.getKey());
 				if (hit == null || e.getValue() == null) continue;
 				IntCounter counter = hits.get(hit);
-				if (counter == null) continue;
+				if (counter == null) {
+					counter = new IntCounter();
+					hits.put(hit, counter);
+				}
 				counter.setCurrent(Math.max(0, e.getValue()));
 			}
 			syncHitTypeCurrents();
 		}
+		overworkWarned = savedOverworkWarned;
 		if (savedDeposited != null) {
 			deposited.addAll(savedDeposited);
 		}
@@ -186,10 +216,8 @@ public class GoldsmithStation {
 		if (project == null) return GoldsmithFeedback.NO_PROJECT;
 		if (!checkItems()) return GoldsmithFeedback.LACKING_ITEMS;
 		if (hit == null || hit.getType() == null) return GoldsmithFeedback.WRONG_TYPE;
-		if (!hitTypes.containsKey(hit.getType())) return GoldsmithFeedback.NONE;
 
 		IntCounter hitCounter = hits.get(hit);
-
 		if (hitCounter != null) {
 			hitCounter.increaseCurrent(1);
 		} else {
@@ -197,7 +225,10 @@ public class GoldsmithStation {
 			counter.setCurrent(1);
 			hits.put(hit, counter);
 		}
-		hitTypes.get(hit.getType()).increaseCurrent(1);
+		IntCounter typeCounter = hitTypes.get(hit.getType());
+		if (typeCounter != null) {
+			typeCounter.increaseCurrent(1);
+		}
 		return GoldsmithFeedback.SUCCESS;
 	}
 
@@ -231,17 +262,12 @@ public class GoldsmithStation {
 		hitTypes.clear();
 		deposited.clear();
 		depositedByMaterial.clear();
+		overworkWarned = false;
 		return refund;
 	}
 
 	private void recomputeRequiredHits() {
 		Map<GoldsmithHit, Integer> required = GoldsmithMath.requiredHits(depositedByMaterial);
-		Iterator<Map.Entry<GoldsmithHit, IntCounter>> iterator = hits.entrySet().iterator();
-		while (iterator.hasNext()) {
-			if (!required.containsKey(iterator.next().getKey())) {
-				iterator.remove();
-			}
-		}
 		for (Map.Entry<GoldsmithHit, Integer> entry : required.entrySet()) {
 			IntCounter counter = hits.get(entry.getKey());
 			if (counter == null) {

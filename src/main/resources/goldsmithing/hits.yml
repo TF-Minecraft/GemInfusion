@@ -1,13 +1,13 @@
-# Tool paths are MMOItems TYPE.ID, matched against the item in the player's main hand.
+# TLibs item paths, matched against the item in the player's main hand.
 hit:
-    tool: tools.goldsmith_hammer
+    tool: m.tools.goldsmith_hammer
     name: "§7Hit"
     type: gold
 small_hit:
-    tool: tools.small_goldsmith_hammer
+    tool: m.tools.small_goldsmith_hammer
     name: "§7Small Hit"
     type: gold
 tinker:
-    tool: tools.goldsmith_tinker_tool
+    tool: m.tools.goldsmith_tinker_tool
     name: "§7Tinker"
     type: gold
