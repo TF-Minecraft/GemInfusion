@@ -6,7 +6,7 @@
 
     <groupId>me.plugins</groupId>
     <artifactId>geminfusion</artifactId>
-    <version>2.2</version>
+    <version>main-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.release>21</maven.compiler.release>
