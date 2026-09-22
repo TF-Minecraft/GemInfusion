@@ -1,7 +1,7 @@
 main: me.Plugins.GemInfusion.InfusionMain
 api-version: 1.18
 name: GemInfusion
-version: 1.0
+version: ${project.version}
 author: Drefvelin
 
 depend: [TLibs, MMOItems, MythicLib]
