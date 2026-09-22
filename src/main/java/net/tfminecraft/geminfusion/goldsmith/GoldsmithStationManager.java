@@ -154,6 +154,8 @@ public class GoldsmithStationManager implements Listener {
 		handleLeftClick(e);
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	@EventHandler
 	public void onMenuClick(InventoryClickEvent e) {
 		if (!e.getView().getTitle().equals(GoldsmithInventoryManager.TITLE)) return;
@@ -208,6 +210,8 @@ public class GoldsmithStationManager implements Listener {
 		}
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	private void handleRightClick(PlayerInteractEvent e) {
 		Player p = e.getPlayer();
 		ItemStack hand = p.getInventory().getItemInMainHand();
@@ -293,6 +297,8 @@ public class GoldsmithStationManager implements Listener {
 		}
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	private void handleLeftClick(PlayerInteractEvent e) {
 		Player p = e.getPlayer();
 		GoldsmithStation station = get(e.getClickedBlock().getLocation());
@@ -382,6 +388,8 @@ public class GoldsmithStationManager implements Listener {
 		p.sendMessage("§cSHIFT + LEFT CLICK with the branding tool to cancel the project!");
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	private void completeCraft(Player p, GoldsmithStation station) {
 		JewelryCraftResult result = JewelryOutput.build(station, p);
 		if (result == null) {

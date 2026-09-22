@@ -16,7 +16,11 @@ public class Gemstone {
 	public Boolean locationSpecific;
 	public String location;
 	public String socketColour;
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	public ChatColor socketNameColour;
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	public ChatColor colour;
 	public List<GemStat> stats = new ArrayList<GemStat>();
 	
@@ -39,9 +43,13 @@ public class Gemstone {
 	public void setSocketColour(String colour) {
 		this.socketColour = colour;
 	}
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	public void setSocketNameColour(ChatColor colour) {
 		this.socketNameColour = colour;
 	}
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	public void setColour(ChatColor colour) {
 		this.colour = colour;
 	}
@@ -77,12 +85,16 @@ public class Gemstone {
 	public String getLocation() {
 		return this.location;
 	}
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	public ChatColor getColour() {
 		return colour;
 	}
 	public String getSocketColour() {
 		return this.socketColour;
 	}
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	public ChatColor getSocketNameColour() {
 		return this.socketNameColour;
 	}
