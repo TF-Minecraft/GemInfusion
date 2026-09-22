@@ -1,41 +1,22 @@
-# geminfusion
+# GemInfusion
 
-Technical documentation is maintained in [TF-Minecraft/Docs](https://github.com/TF-Minecraft/Docs/blob/main/projects/GemInfusion/README.md).
+> Infused gemstones and crafted jewellery for TF-Minecraft.
 
-Use that project index for setup, configuration, architecture, integration and testing guides. This repository contains the source and project-specific assets.
+GemInfusion gives gemstones rolled bonuses and turns them into a resource for equipment customisation and goldsmithing. Players infuse gems at a station, discover their rarity and strength, then use them in compatible sockets or as the centrepiece of crafted jewellery.
 
-## TLibs build dependency
+## Features
 
-TLibs is a versioned Maven `provided` dependency. From this repository, prepare
-it once with the shared installer, then build as usual:
+- **Gem infusion** — process batches of gemstones using an infusion token, with station feedback as the infusion runs.
+- **Rarity and stat rolls** — gems range from common to legendary and provide bonuses such as health, armour, damage, or damage reduction according to their type.
+- **Character influence** — Intelligence affects an infused gem's rolled stat, while Dexterity separately influences the bonus carried into jewellery.
+- **Socketed equipment** — connects gems with MMOItems sockets and preserves rarity information through socketing and removal.
+- **Goldsmithing projects** — craft rings, necklaces, medals, and other pieces from metal materials and an infused gem at a smithing station.
+- **Craftsmanship matters** — recipe accuracy, tool work, project tier, and finishing quality shape how much of the gem's bonus reaches the finished piece.
 
-```sh
-python3 ../tlibs/tools/install-dependency.py --pom pom.xml
-mvn clean verify
-```
+The same gemstone links discovery and craft: its infusion determines the starting bonus, and the goldsmith's work shapes the jewellery made from it. Legendary infusions can also be announced to other players.
 
-See [TLibs dependency setup](https://github.com/TF-Minecraft/TLibs/blob/5da8e77d0e0696bbff7d7064a2644072da9c6428/DEPENDENCIES.md)
-for public release installation, offline builds and rollback.
-Other declared build dependencies still need their usual preparation.
-Use JDK 25 for this TLibs binary; the server must also run Java 25.
+## Documentation
 
-Builds and server runtime require Java 25. Local builds default to [TLibs 1.1.0](https://github.com/TF-Minecraft/TLibs/releases/tag/v1.1.0); CI resolves the latest published stable TLibs release for each build, verifies its checksum, and uses its exact version throughout that job.
+[Project documentation](https://github.com/TF-Minecraft/Docs/blob/main/projects/GemInfusion/README.md)
 
-## Shared plugin dependencies
-
-Build and release workflows install checksum-verified plugin releases through
-[TLibs' shared installer](https://github.com/TF-Minecraft/TLibs/blob/main/DEPENDENCIES.md).
-CI selects the latest published versions; local builds use the explicit Maven
-version properties. Shared plugins use `provided` scope and remain separate
-server plugins. Each build records exact versions and checksums in
-`.build/plugin-dependencies.json` alongside its JAR.
-
-From this checkout, with the TLibs repository next to it:
-
-```sh
-python3 ../tlibs/tools/install-plugins.py --pom pom.xml
-```
-
-Prepare any remaining third-party inputs with `.github/scripts/prepare-release.sh`
-before running Maven. Any source-unavailable inputs remain private and checksum-pinned wherever declared; see the installer
-documentation for authentication and reproducible rebuilds.
+Technical documentation is maintained in [TF-Minecraft/Docs](https://github.com/TF-Minecraft/Docs).
