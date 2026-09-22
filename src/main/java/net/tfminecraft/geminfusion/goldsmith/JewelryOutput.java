@@ -147,7 +147,7 @@ public final class JewelryOutput {
 		DoubleData data = new DoubleData(value);
 		mmo.setData(itemStat, data);
 		@SuppressWarnings("deprecation")
-		StatHistory hist = StatHistory.from(mmo, itemStat);
+		StatHistory hist = mmo.computeStatHistory(itemStat);
 		if (hist != null) {
 			hist.registerExternalData(data);
 			mmo.setStatHistory(itemStat, hist);
@@ -156,7 +156,7 @@ public final class JewelryOutput {
 	}
 
 	private static void zeroOriginal(MMOItem mmo, ItemStat<?, ?> itemStat) {
-		StatHistory hist = StatHistory.from(mmo, itemStat);
+		StatHistory hist = mmo.computeStatHistory(itemStat);
 		if (hist != null) {
 			Object og = hist.getOriginalData();
 			if (og instanceof DoubleData doubleOg) {

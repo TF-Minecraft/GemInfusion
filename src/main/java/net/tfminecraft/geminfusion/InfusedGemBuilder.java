@@ -68,7 +68,7 @@ public final class InfusedGemBuilder {
 			itemName.setString(infusedName);
 		}
 		mmo.replaceData(ItemStats.NAME, itemName);
-		StatHistory hist = StatHistory.from(mmo, ItemStats.NAME);
+		StatHistory hist = mmo.computeStatHistory(ItemStats.NAME);
 		if (hist != null) {
 			NameData og = (NameData) hist.getOriginalData();
 			og.setString(infusedName);
