@@ -1,4 +1,4 @@
-main: me.Plugins.GemInfusion.InfusionMain
+main: net.tfminecraft.geminfusion.InfusionMain
 api-version: '1.21.10'
 name: GemInfusion
 version: ${project.version}
