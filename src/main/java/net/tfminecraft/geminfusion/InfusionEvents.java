@@ -29,6 +29,8 @@ import net.Indyuce.mmoitems.api.item.mmoitem.MMOItem;
 
 public class InfusionEvents implements Listener{
 	public List<InfusionBlock> currentStations = new ArrayList<InfusionBlock>();
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	@EventHandler
 	public void addGemEvent(PlayerInteractEvent e) {
 		if(!e.getAction().equals(Action.RIGHT_CLICK_BLOCK)) return;
@@ -102,6 +104,8 @@ public class InfusionEvents implements Listener{
 			}
 		}
 	}
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	@EventHandler
 	public void infuseHitEvent(PlayerInteractEvent e) {
 		if(!e.getAction().equals(Action.LEFT_CLICK_BLOCK)) return;

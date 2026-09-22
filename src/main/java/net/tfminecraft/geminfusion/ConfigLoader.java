@@ -45,6 +45,8 @@ public class ConfigLoader {
 		AttributeInfluence.infusion = AttributeInfluence.from(config.getConfigurationSection("attribute-influence"), "intelligence");
 		AttributeInfluence.jewelry = AttributeInfluence.from(config.getConfigurationSection("jewelry-attribute-influence"), "dexterity");
 	}
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	public Gemstone getGemFromConfig(FileConfiguration config, String key) {
 		Gemstone gem = new Gemstone();
 		gem.setId(key);

@@ -79,6 +79,8 @@ public class InfusionMain extends JavaPlugin {
 		goldsmithStations.loadPersisted();
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	public void reloadConfigPCommand(Player p) {
 		p.sendMessage(ChatColor.GREEN + "[GemInfusion]" + ChatColor.YELLOW + " Reloading plugin...");
 		reloadConfigCommand();

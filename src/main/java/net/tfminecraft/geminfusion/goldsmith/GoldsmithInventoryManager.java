@@ -23,6 +23,8 @@ public class GoldsmithInventoryManager {
 		return new NamespacedKey(InfusionMain.plugin, "gi_project");
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	public int openMenu(Player player) {
 		Inventory inv = InfusionMain.plugin.getServer().createInventory(null, 27, TITLE);
 		int slot = 0;
@@ -41,6 +43,8 @@ public class GoldsmithInventoryManager {
 		return slot;
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	private ItemStack decorate(ItemStack icon, JewelryProject project) {
 		ItemMeta meta = icon.getItemMeta();
 		if (meta == null) return icon;
@@ -83,6 +87,8 @@ public class GoldsmithInventoryManager {
 		return copy;
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	private void fillEmpty(Inventory inv) {
 		ItemStack fill = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
 		ItemMeta meta = fill.getItemMeta();

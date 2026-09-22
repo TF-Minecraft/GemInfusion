@@ -57,6 +57,8 @@ public final class InfusedGemBuilder {
 		mmo.setData(ItemStats.SUCCESS_RATE, new DoubleData(Math.floor(Math.random() * maxChance) + 40));
 	}
 
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
 	public static void applyCosmetics(MMOItem mmo, Gemstone gem, GemRarity rarity) {
 		mmo.setData(ItemStats.DISPLAYED_TYPE, new StringData("Infused Gemstone"));
 
