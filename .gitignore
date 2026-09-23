@@ -52,6 +52,3 @@ Desktop.ini
 
 # Local investigation notes and test artifacts
 /.scratch/
-
-# Repository-specific generated or local files
-/src/main/resources/goldsmithing.zip
