@@ -37,31 +37,32 @@ green_ring:
     tier: greater
     gem: 1
     recipe:
-        - moldable_gold.4
-        - shiny_gold.6
+        - moldable_gold.5
+        - shiny_gold.5
 red_necklace:
     name: "§fRed Necklace"
     item: m.amulet.fine_red_amulet
     tier: minor
     gem: 1
     recipe:
-        - rough_gold.4
+        - rough_gold.3
+        - moldable_gold.1
 purple_necklace:
     name: "§fPurple Necklace"
     item: m.amulet.fine_purple_amulet
     tier: lesser
     gem: 1
     recipe:
-        - rough_gold.3
-        - moldable_gold.3
+        - rough_gold.4
+        - moldable_gold.2
 dark_necklace:
     name: "§fGreen Necklace"
     item: m.amulet.fine_dark_amulet
     tier: major
     gem: 1
     recipe:
-        - rough_gold.2
-        - moldable_gold.4
+        - rough_gold.3
+        - moldable_gold.3
         - shiny_gold.2
 pendant:
     name: "§fPendant"
@@ -69,30 +70,32 @@ pendant:
     tier: greater
     gem: 1
     recipe:
-        - moldable_gold.4
-        - shiny_gold.6
+        - moldable_gold.3
+        - shiny_gold.7
 green_medal:
     name: "§fGreen Medal"
     item: m.artifact.good_green_medal
     tier: minor
     gem: 1
     recipe:
-        - rough_gold.4
+        - rough_gold.3
+        - shiny_gold.1
 blue_medal:
     name: "§fBlue Medal"
     item: m.artifact.good_medal
     tier: minor
     gem: 1
     recipe:
-        - rough_gold.4
+        - rough_gold.2
+        - moldable_gold.2
 mirror:
     name: "§fMirror"
     item: m.artifact.good_mirror
     tier: lesser
     gem: 1
     recipe:
-        - rough_gold.3
-        - moldable_gold.3
+        - rough_gold.2
+        - moldable_gold.4
 chalice:
     name: "§fChalice"
     item: m.artifact.good_chalice
@@ -100,13 +103,14 @@ chalice:
     gem: 1
     recipe:
         - rough_gold.2
-        - moldable_gold.4
-        - shiny_gold.2
+        - moldable_gold.3
+        - shiny_gold.3
 bracelet:
     name: "§fGold Bracelet"
     item: m.artifact.good_bracelet
     tier: greater
     gem: 1
     recipe:
+        - rough_gold.1
         - moldable_gold.4
-        - shiny_gold.6
+        - shiny_gold.5
