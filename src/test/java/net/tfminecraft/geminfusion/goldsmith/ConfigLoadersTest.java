@@ -265,6 +265,41 @@ class ConfigLoadersTest {
   }
 
   @Test
+  void removedQualityTierLeavesEqualOrInvertedCachedThresholdSafe() throws Exception {
+    for (int nextAmount : new int[] {40, 50}) {
+      new QualityLoader()
+          .load(
+              yaml(
+                  "low:\n  amount: 50\n  value: 1\n  stat-min: 10\n  stat-max: 30\n"
+                      + "high:\n  amount: "
+                      + nextAmount
+                      + "\n  value: 2\n  stat-min: 40\n  stat-max: 80\n"));
+      // The public mutable registry can change independently of the cached sorted tiers.
+      QualityLoader.get().remove("high");
+      assertEquals("low", QualityLoader.getByAmount(50).getId());
+      assertEquals(10, QualityLoader.resolveStatFactor(50));
+      assertEquals(10, QualityLoader.resolveStatFactor(75));
+    }
+  }
+
+  @Test
+  void extremeConfiguredQualityValuesKeepDegenerateInterpolationFinite() throws Exception {
+    for (int nextAmount : new int[] {40, 50}) {
+      new QualityLoader()
+          .load(
+              yaml(
+                  "top:\n  amount: 50\n  value: 2147483647\n  stat-min: 10\n  stat-max: 30\n"
+                      + "wrapped:\n  amount: "
+                      + nextAmount
+                      + "\n  value: -2147483648\n  stat-min: 40\n  stat-max: 80\n"));
+      assertEquals("top", QualityLoader.getByAmount(50).getId());
+      // The next-value lookup wraps at MAX_VALUE even without registry mutations.
+      assertEquals(10, QualityLoader.resolveStatFactor(50));
+      assertEquals(10, QualityLoader.resolveStatFactor(75));
+    }
+  }
+
+  @Test
   void mainGoldsmithConfigLoadsDefaultsOverridesAndBlankPermission() throws Exception {
     GoldsmithConfigLoader loader = new GoldsmithConfigLoader();
     loader.load(yaml("{}"));

@@ -47,6 +47,9 @@ public class QualityLoader {
 		}
 		Quality next = getByValue(tier.getValue() + 1);
 		double upper = next == null ? 100 : next.getAmount();
+		if (upper <= tier.getAmount()) {
+			return clamp(tier.getStatMin(), tier.getStatMin(), tier.getStatMax());
+		}
 		double progress = (finishedTotal - tier.getAmount()) / (upper - tier.getAmount());
 		double factor = tier.getStatMin() + progress * (tier.getStatMax() - tier.getStatMin());
 		return clamp(factor, tier.getStatMin(), tier.getStatMax());
