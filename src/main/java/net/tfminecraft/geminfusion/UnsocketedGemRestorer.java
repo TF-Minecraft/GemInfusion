@@ -31,9 +31,6 @@ public final class UnsocketedGemRestorer {
 
 		PlayerInventory inventory = player.getInventory();
 		ItemStack item = inventory.getItem(slot);
-		if (item == null || item.getType().isAir()) {
-			return;
-		}
 		inventory.setItem(slot, InfusedGemBuilder.applyCosmeticsToItem(item, gem, rarity));
 	}
 
@@ -68,7 +65,7 @@ public final class UnsocketedGemRestorer {
 		for (int slot : needsRestore) {
 			ItemStack item = inventory.getItem(slot);
 			ItemStack before = beforeInventory.get(slot);
-			if (before != null && !before.getType().isAir() && item.getAmount() > before.getAmount()) {
+			if (item.getAmount() > before.getAmount()) {
 				return slot;
 			}
 		}

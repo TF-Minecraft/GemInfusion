@@ -238,16 +238,16 @@ public class GoldsmithStation {
 			if (!c.isEqual()) return false;
 		}
 		if (project.requiresGem() && gem == null) return false;
-		if (project.requiresGem() && gem != null && !InfusedGemValidator.isInfused(gem)) return false;
+		if (project.requiresGem() && !InfusedGemValidator.isInfused(gem)) return false;
 		return true;
 	}
 
 	public GoldsmithFeedback canFinish() {
 		if (project == null) return GoldsmithFeedback.NO_PROJECT;
-		if (!checkItems()) return GoldsmithFeedback.LACKING_ITEMS;
 		if (project.requiresGem() && gem != null && !InfusedGemValidator.isInfused(gem)) {
 			return GoldsmithFeedback.NOT_INFUSED;
 		}
+		if (!checkItems()) return GoldsmithFeedback.LACKING_ITEMS;
 		if (!GoldsmithMath.meetsMinHitPercent(getHitPercent())) return GoldsmithFeedback.LACKING_HITS;
 		return GoldsmithFeedback.SUCCESS;
 	}

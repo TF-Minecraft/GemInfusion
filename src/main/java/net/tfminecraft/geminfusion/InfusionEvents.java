@@ -18,6 +18,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.EquipmentSlot;
+import net.tfminecraft.geminfusion.goldsmith.GoldsmithLog;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
@@ -33,6 +35,7 @@ public class InfusionEvents implements Listener{
 	@SuppressWarnings("deprecation")
 	@EventHandler
 	public void addGemEvent(PlayerInteractEvent e) {
+		if (e.getHand() == EquipmentSlot.OFF_HAND) return;
 		if(!e.getAction().equals(Action.RIGHT_CLICK_BLOCK)) return;
 		Material block = e.getClickedBlock().getType();
 		if(!ConfigLoader.stations.contains(block)) return;
@@ -76,7 +79,7 @@ public class InfusionEvents implements Listener{
 						p.sendMessage(ChatColor.RED + "Infusion has already started, you cannot add more gems at this point!");
 						return;
 					}
-					if(b.getCurrentItems().size() >= 10) {
+					if(loc.equals(b.getLocation()) && b.getCurrentItems().size() >= 10) {
 						p.sendMessage(ChatColor.RED + "You can only infuse 10 gems at a time!");
 						return;
 					}
@@ -108,6 +111,7 @@ public class InfusionEvents implements Listener{
 	@SuppressWarnings("deprecation")
 	@EventHandler
 	public void infuseHitEvent(PlayerInteractEvent e) {
+		if (e.getHand() == EquipmentSlot.OFF_HAND) return;
 		if(!e.getAction().equals(Action.LEFT_CLICK_BLOCK)) return;
 		Material block = e.getClickedBlock().getType();
 		if(!ConfigLoader.stations.contains(block)) return;
@@ -124,6 +128,18 @@ public class InfusionEvents implements Listener{
 					String itemType = ConfigLoader.infusionStaff.split("\\.")[0];
 					String itemID = ConfigLoader.infusionStaff.split("\\.")[1];
 					if(nbt.getType().equalsIgnoreCase(itemType) && nbt.getString("MMOITEMS_ITEM_ID").equalsIgnoreCase(itemID)) {
+						// Resolve the whole batch before consuming the staff or clearing the bench.
+						// A later config reload must not strand an already consumed batch.
+						List<GemRarity> batchRarities = new ArrayList<>();
+						if (b.getInfusionHits() >= 4) {
+							try {
+								for (Gemstone ignored : b.getCurrentItems()) batchRarities.add(getRarity());
+							} catch (IllegalStateException invalidRarities) {
+								GoldsmithLog.warn(invalidRarities.getMessage());
+								p.sendMessage(ChatColor.RED + "Infusion rarities are not configured correctly. Contact staff; your gems remain on the bench.");
+								return;
+							}
+						}
 						b.setInfustionHits(b.getInfusionHits()+1);
 						p.sendTitle(ChatColor.LIGHT_PURPLE + "Infusing...", ChatColor.GREEN + "Progress: " + ChatColor.YELLOW + b.getInfusionHits() + "/5", 1, 40, 20);
 						b.getLocation().getWorld().spawnParticle(Particle.FLAME, b.getParticleLocation(), 60);
@@ -143,7 +159,7 @@ public class InfusionEvents implements Listener{
 								   {
 									if(i < b.getCurrentItems().size()) {
 										Gemstone gem = b.getCurrentItems().get(i);
-										GemRarity r = getRarity();
+										GemRarity r = batchRarities.get(i);
 										if(r.shouldAnnounce()) {
 											for(Player player : Bukkit.getOnlinePlayers()) {
 												player.sendMessage("§e"+p.getName()+" just infused a "+r.getName()+" "+gem.getColour()+gem.getName()+"§e Gemstone");
@@ -175,31 +191,34 @@ public class InfusionEvents implements Listener{
 		}
 	}
 	public GemRarity getRarity() {
-		Double maxWeight = 0.0;
-		for(GemRarity r : ConfigLoader.loadedRarities) {
-			maxWeight = maxWeight+r.getChance();
-		}
-		Integer dropped = 0;
-		GemRarity rarity = null;
-		while(dropped < 1) {
-			Double random = Math.random();
-			Double previous = 0.0;
-			for(GemRarity r : ConfigLoader.loadedRarities) {
-				if(maxWeight <= 0) {
-					maxWeight = 1.0;
-				}
-				Double chance = r.getChance() / maxWeight;
-				Double max = previous+chance;
-				if(random <= max && random > previous) {
-					dropped++;
-					rarity = r;
-				}
-				previous = max;
+		return getRarity(Math.random());
+	}
+
+	GemRarity getRarity(double draw) {
+		List<GemRarity> valid = new ArrayList<>();
+		double largest = 0;
+		for (GemRarity rarity : ConfigLoader.loadedRarities) {
+			double weight = rarity.getChance();
+			if (Double.isFinite(weight) && weight > 0) {
+				valid.add(rarity);
+				largest = Math.max(largest, weight);
 			}
 		}
-		return rarity;
+		if (valid.isEmpty()) {
+			throw new IllegalStateException("Gem infusion requires at least one finite positive rarity weight.");
+		}
+		// Scale before summing so individually valid large weights cannot overflow.
+		double total = 0;
+		for (GemRarity rarity : valid) total += rarity.getChance() / largest;
+		double roll = draw * total;
+		for (GemRarity rarity : valid) {
+			roll -= rarity.getChance() / largest;
+			if (roll < 0) return rarity;
+		}
+		return valid.getLast(); // Floating-point rounding at the upper boundary.
 	}
 	
+
 	public ItemStack getInfusedGem(Player player, Gemstone gem, Integer amount, GemRarity r) {
 		return InfusedGemBuilder.buildInfusedGem(gem, r, amount, player);
 	}

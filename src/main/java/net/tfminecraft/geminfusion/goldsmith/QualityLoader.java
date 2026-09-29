@@ -42,7 +42,7 @@ public class QualityLoader {
 		if (tier == null) {
 			return 1;
 		}
-		if (tier.getAmount() >= 100 || tier.getStatMin() >= 100) {
+		if (tier.getStatMin() >= 100) {
 			return 100;
 		}
 		Quality next = getByValue(tier.getValue() + 1);
