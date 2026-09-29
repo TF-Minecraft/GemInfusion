@@ -47,7 +47,6 @@ public class GoldsmithInventoryManager {
 	@SuppressWarnings("deprecation")
 	private ItemStack decorate(ItemStack icon, JewelryProject project) {
 		ItemMeta meta = icon.getItemMeta();
-		if (meta == null) return icon;
 		meta.setDisplayName(project.getName());
 		List<String> lore = new ArrayList<>();
 		lore.add("§7Tier: §e" + formatTierName(project.getTierId()));
@@ -74,7 +73,7 @@ public class GoldsmithInventoryManager {
 			return null;
 		}
 		ItemStack stack = TLibs.getItemAPI().getCreator().getItemFromPath(path);
-		if (stack == null) {
+		if (stack == null || stack.getItemMeta() == null) {
 			GoldsmithLog.warn("Could not build item for " + label + " (" + path + "), skipping menu slot.");
 			return null;
 		}

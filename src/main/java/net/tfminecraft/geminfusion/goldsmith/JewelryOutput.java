@@ -126,7 +126,6 @@ public final class JewelryOutput {
 	}
 
 	private static StatRoll readDouble(MMOItem mmo, String statId) {
-		if (statId == null || statId.isBlank()) return null;
 		if (statId.equalsIgnoreCase("SUCCESS_RATE") || statId.equalsIgnoreCase("SUCCESS-RATE")) return null;
 		ItemStat<?, ?> stat = MMOItems.plugin.getStats().get(statId.toUpperCase());
 		if (stat == null) return null;

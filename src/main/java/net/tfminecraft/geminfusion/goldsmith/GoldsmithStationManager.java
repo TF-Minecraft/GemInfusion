@@ -194,7 +194,7 @@ public class GoldsmithStationManager implements Listener {
 		p.playSound(p.getLocation(), Sound.BLOCK_ANVIL_PLACE, 0.8f, 2f);
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true)
 	public void onBreak(BlockBreakEvent e) {
 		if (!isGoldsmithStation(e.getBlock())) return;
 		Location loc = e.getBlock().getLocation();
@@ -303,18 +303,12 @@ public class GoldsmithStationManager implements Listener {
 		Player p = e.getPlayer();
 		GoldsmithStation station = get(e.getClickedBlock().getLocation());
 		if (station == null || !station.hasProject()) {
-			if (!onCooldown(p)) {
-				p.sendMessage("§7Right-click the bench to choose a project.");
-				markCooldown(p);
-			}
+			p.sendMessage("§7Right-click the bench to choose a project.");
+			markCooldown(p);
 			return;
 		}
 
 		ItemStack hand = p.getInventory().getItemInMainHand();
-		if (hand == null || hand.getType().isAir()) {
-			return;
-		}
-
 		if (isBranding(hand)) {
 			markCooldown(p);
 			if (p.isSneaking()) {
@@ -346,7 +340,6 @@ public class GoldsmithStationManager implements Listener {
 		}
 
 		GoldsmithHit hit = GoldsmithHitLoader.getByItem(hand);
-		if (hit == null) return;
 
 		markCooldown(p);
 		GoldsmithFeedback feedback = station.hit(hit);
@@ -398,11 +391,9 @@ public class GoldsmithStationManager implements Listener {
 			return;
 		}
 		Location drop = station.getLoc().clone().add(0.5, 1, 0.5);
-		if (drop.getWorld() != null) {
-			drop.getWorld().dropItemNaturally(drop, result.getItem());
-			drop.getWorld().playSound(drop, Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
-			drop.getWorld().playSound(drop, Sound.BLOCK_ANVIL_PLACE, 1f, 1f);
-		}
+		drop.getWorld().dropItemNaturally(drop, result.getItem());
+		drop.getWorld().playSound(drop, Sound.ENTITY_PLAYER_LEVELUP, 1f, 1f);
+		drop.getWorld().playSound(drop, Sound.BLOCK_ANVIL_PLACE, 1f, 1f);
 		p.sendTitle("§aYou made a " + station.getProject().getName(), "", 5, 40, 10);
 		p.sendMessage("§7Recipe: §e" + Math.round(result.getRecipePercent()) + "%");
 		p.sendMessage("§7Hits: §e" + Math.round(result.getHitPercent()) + "%");
@@ -436,7 +427,6 @@ public class GoldsmithStationManager implements Listener {
 
 	private void consumeOne(Player p) {
 		ItemStack hand = p.getInventory().getItemInMainHand();
-		if (hand == null || hand.getType().isAir()) return;
 		hand.setAmount(hand.getAmount() - 1);
 	}
 
@@ -450,7 +440,6 @@ public class GoldsmithStationManager implements Listener {
 	}
 
 	private void dropAt(Location loc, List<ItemStack> items) {
-		if (loc.getWorld() == null) return;
 		Location drop = loc.clone().add(0.5, 1, 0.5);
 		for (ItemStack item : items) {
 			loc.getWorld().dropItemNaturally(drop, item);
@@ -458,7 +447,6 @@ public class GoldsmithStationManager implements Listener {
 	}
 
 	private void playWorkFx(Location loc, Material dust) {
-		if (loc.getWorld() == null) return;
 		loc.getWorld().spawnParticle(
 				Particle.BLOCK,
 				loc.clone().add(0.5, 1, 0.5),

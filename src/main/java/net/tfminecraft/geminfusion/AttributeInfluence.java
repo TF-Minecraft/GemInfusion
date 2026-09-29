@@ -88,12 +88,6 @@ public final class AttributeInfluence {
 	}
 
 	private static double lerp(double a, double b, double t) {
-		if (t < 0) {
-			t = 0;
-		}
-		if (t > 1) {
-			t = 1;
-		}
 		return a + (b - a) * t;
 	}
 }

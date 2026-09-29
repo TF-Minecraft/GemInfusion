@@ -114,8 +114,7 @@ public final class GoldsmithMath {
 			int lineCurrent = counter == null ? 0 : Math.max(0, counter.getCurrent());
 			double d = lineHitPercentage(lineCurrent, lineNeeded);
 			if (d >= 200.0) continue;
-			if (d <= 100.0) amount += d;
-			if (d > 100.0 && d <= 200.0) amount += (200.0 - d);
+			amount += d <= 100.0 ? d : 200.0 - d;
 		}
 		if (lineCount <= 0) return 0;
 		return Math.round(amount / lineCount);
@@ -132,8 +131,7 @@ public final class GoldsmithMath {
 			int lineCurrent = currentCounts == null ? 0 : Math.max(0, currentCounts.getOrDefault(entry.getKey(), 0));
 			double d = lineHitPercentage(lineCurrent, lineNeeded);
 			if (d >= 200.0) continue;
-			if (d <= 100.0) amount += d;
-			if (d > 100.0 && d <= 200.0) amount += (200.0 - d);
+			amount += d <= 100.0 ? d : 200.0 - d;
 		}
 		if (lineCount <= 0) return 0;
 		return Math.round(amount / lineCount);
@@ -148,7 +146,6 @@ public final class GoldsmithMath {
 	}
 
 	private static double lineHitPercentage(int current, int needed) {
-		if (needed <= 0) return 0;
 		return Math.round((double) current / needed * 100.0);
 	}
 

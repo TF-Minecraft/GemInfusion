@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -27,6 +28,7 @@ import org.bukkit.util.io.BukkitObjectOutputStream;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
 
 import net.tfminecraft.geminfusion.InfusionMain;
 import net.tfminecraft.tlibs.objects.utils.IntCounter;
@@ -38,6 +40,8 @@ import net.tfminecraft.tlibs.objects.utils.IntCounter;
 public final class GoldsmithStationStore {
 
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+	/** Files rejected on load remain available for repair, including during autosave. */
+	private static final Set<File> retainedFiles = new HashSet<>();
 
 	private GoldsmithStationStore() {
 	}
@@ -59,6 +63,7 @@ public final class GoldsmithStationStore {
 	public static void delete(Location loc) {
 		if (loc == null) return;
 		File file = fileFor(loc);
+		if (retainedFiles.contains(file)) return;
 		if (file.exists() && !file.delete()) {
 			GoldsmithLog.warn("Failed to delete goldsmith station file " + file.getName());
 		}
@@ -75,7 +80,7 @@ public final class GoldsmithStationStore {
 				if (station == null || !station.hasProject() || station.getLoc() == null) continue;
 				File file = fileFor(station.getLoc());
 				keep.add(file.getName());
-				write(station, file);
+				if (!retainedFiles.contains(file) || quarantineRetained(file)) write(station, file);
 			}
 		}
 
@@ -83,7 +88,7 @@ public final class GoldsmithStationStore {
 		if (files == null) return;
 		for (File file : files) {
 			if (!file.isFile() || !file.getName().endsWith(".json")) continue;
-			if (!keep.contains(file.getName()) && !file.delete()) {
+			if (!keep.contains(file.getName()) && !retainedFiles.contains(file) && !file.delete()) {
 				GoldsmithLog.warn("Failed to delete leftover goldsmith station file " + file.getName());
 			}
 		}
@@ -91,6 +96,7 @@ public final class GoldsmithStationStore {
 
 	public static List<GoldsmithStation> loadAll() {
 		List<GoldsmithStation> out = new ArrayList<>();
+		retainedFiles.clear();
 		File dir = folder();
 		if (!dir.exists()) {
 			dir.mkdirs();
@@ -102,8 +108,25 @@ public final class GoldsmithStationStore {
 			if (!file.isFile() || !file.getName().endsWith(".json")) continue;
 			GoldsmithStation station = loadFile(file);
 			if (station != null) out.add(station);
+			else retainedFiles.add(file);
 		}
 		return out;
+	}
+
+	/** Keep rejected bytes recoverable without blocking a new station at the same coordinates. */
+	private static boolean quarantineRetained(File file) {
+		if (file.exists()) {
+			File backup = new File(file.getParentFile(), file.getName() + ".rejected-" + UUID.randomUUID());
+			try {
+				Files.move(file.toPath(), backup.toPath());
+				GoldsmithLog.info("Retained rejected goldsmith station file as " + backup.getName());
+			} catch (IOException ex) {
+				GoldsmithLog.warn("Failed to quarantine goldsmith station file " + file.getName() + ": " + ex.getMessage());
+				return false;
+			}
+		}
+		retainedFiles.remove(file);
+		return true;
 	}
 
 	private static void write(GoldsmithStation station, File file) {
@@ -118,39 +141,40 @@ public final class GoldsmithStationStore {
 	}
 
 	private static GoldsmithStation loadFile(File file) {
+		StationData data;
 		try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
-			StationData data = GSON.fromJson(reader, StationData.class);
-			if (data == null || data.world == null || data.project == null) {
-				GoldsmithLog.warn("Invalid goldsmith station file " + file.getName() + ", leaving it on disk.");
-				return null;
-			}
-			World world = Bukkit.getWorld(data.world);
-			if (world == null) {
-				GoldsmithLog.warn("Goldsmith station file " + file.getName() + " world '" + data.world
-						+ "' is missing, leaving it on disk.");
-				return null;
-			}
-			JewelryProject project = JewelryProjectLoader.getByString(data.project);
-			if (project == null) {
-				GoldsmithLog.warn("Goldsmith station file " + file.getName() + " unknown project '" + data.project
-						+ "', leaving it on disk.");
-				return null;
-			}
-			Location loc = GoldsmithStationManager.key(new Location(world, data.x, data.y, data.z));
-			GoldsmithStation station = new GoldsmithStation(loc);
-			station.setProject(project);
-			station.applySavedProgress(data.materials, data.hits, decodeItems(data.deposited), decodeItem(data.gem),
-					data.overworkWarned);
-			return station;
-		} catch (IOException ex) {
+			data = GSON.fromJson(reader, StationData.class);
+		} catch (IOException | JsonParseException ex) {
 			GoldsmithLog.warn("Failed to read goldsmith station file " + file.getName() + ": " + ex.getMessage());
 			return null;
 		}
+		if (data == null || data.world == null || data.project == null) {
+			GoldsmithLog.warn("Invalid goldsmith station file " + file.getName() + ", leaving it on disk.");
+			return null;
+		}
+		World world = Bukkit.getWorld(data.world);
+		if (world == null) {
+			GoldsmithLog.warn("Goldsmith station file " + file.getName() + " world '" + data.world
+					+ "' is missing, leaving it on disk.");
+			return null;
+		}
+		JewelryProject project = JewelryProjectLoader.getByString(data.project);
+		if (project == null) {
+			GoldsmithLog.warn("Goldsmith station file " + file.getName() + " unknown project '" + data.project
+					+ "', leaving it on disk.");
+			return null;
+		}
+		Location loc = GoldsmithStationManager.key(new Location(world, data.x, data.y, data.z));
+		GoldsmithStation station = new GoldsmithStation(loc);
+		station.setProject(project);
+		station.applySavedProgress(data.materials, data.hits, decodeItems(data.deposited), decodeItem(data.gem),
+				data.overworkWarned);
+		return station;
 	}
 
 	private static StationData toData(GoldsmithStation station) {
 		Location loc = station.getLoc();
-		if (loc.getWorld() == null || station.getProject() == null) return null;
+		if (loc.getWorld() == null) return null;
 		StationData data = new StationData();
 		data.world = loc.getWorld().getName();
 		data.x = loc.getBlockX();
@@ -173,7 +197,6 @@ public final class GoldsmithStationStore {
 
 	private static List<String> encodeItems(List<ItemStack> items) {
 		List<String> out = new ArrayList<>();
-		if (items == null) return out;
 		for (ItemStack item : items) {
 			String encoded = encodeItem(item);
 			if (encoded != null) out.add(encoded);
