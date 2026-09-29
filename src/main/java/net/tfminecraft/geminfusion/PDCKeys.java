@@ -13,4 +13,8 @@ public final class PDCKeys {
 	public static NamespacedKey socketRarities() {
 		return new NamespacedKey(InfusionMain.plugin, "socket_rarities");
 	}
+
+	public static NamespacedKey goldsmithInputs() {
+		return new NamespacedKey(InfusionMain.plugin, "goldsmith_inputs");
+	}
 }

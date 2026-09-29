@@ -266,6 +266,7 @@ class GemOutputTest {
       JewelryCraftResult result = JewelryOutput.build(station, player);
       assertNotNull(result);
       assertSame(out, result.getItem());
+      assertEquals(Map.of(), GoldsmithProvenance.read(out));
       assertEquals(80, result.getFinishedTotal());
       assertEquals(90, result.getRecipePercent());
       assertEquals(80, result.getHitPercent());
