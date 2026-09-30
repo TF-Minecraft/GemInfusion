@@ -263,9 +263,13 @@ class GemOutputTest {
       valid.when(() -> InfusedGemValidator.isInfused(gemItem)).thenReturn(true);
       qualityApi.when(() -> QualityLoader.getByAmount(80)).thenReturn(quality);
       qualityApi.when(() -> QualityLoader.resolveStatFactor(80)).thenReturn(50.0);
+      GoldsmithMaterial material = mock(GoldsmithMaterial.class);
+      when(material.getPath()).thenReturn("m.materials.shiny_gold");
+      when(station.getDepositedByMaterial()).thenReturn(Map.of(material, 3));
       JewelryCraftResult result = JewelryOutput.build(station, player);
       assertNotNull(result);
       assertSame(out, result.getItem());
+      assertEquals(Map.of("m.materials.shiny_gold", 3), GoldsmithProvenance.read(out));
       assertEquals(80, result.getFinishedTotal());
       assertEquals(90, result.getRecipePercent());
       assertEquals(80, result.getHitPercent());

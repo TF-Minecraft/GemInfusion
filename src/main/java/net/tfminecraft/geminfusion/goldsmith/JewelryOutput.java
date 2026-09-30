@@ -77,6 +77,7 @@ public final class JewelryOutput {
 			return null;
 		}
 		out.setAmount(1);
+		GoldsmithProvenance.stamp(out, station.getDepositedByMaterial());
 		return new JewelryCraftResult(out, recipePct, hitPct, finishedTotal, statCarry, quality);
 	}
 
