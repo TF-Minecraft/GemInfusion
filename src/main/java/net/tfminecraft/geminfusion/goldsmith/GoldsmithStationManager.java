@@ -129,7 +129,7 @@ public class GoldsmithStationManager implements Listener {
 			e.setCancelled(true);
 			if (!Permissions.canUseGoldsmith(player)) {
 				if (!onCooldown(player)) {
-					player.sendMessage("§cYou do not have permission to use goldsmithing.");
+					player.sendMessage(Permissions.NOT_SKILLED_GOLDSMITH);
 					markCooldown(player);
 				}
 				return;
@@ -145,7 +145,7 @@ public class GoldsmithStationManager implements Listener {
 		e.setCancelled(true);
 		if (!Permissions.canUseGoldsmith(player)) {
 			if (!onCooldown(player)) {
-				player.sendMessage("§cYou do not have permission to use goldsmithing.");
+				player.sendMessage(Permissions.NOT_SKILLED_GOLDSMITH);
 				markCooldown(player);
 			}
 			return;
@@ -162,7 +162,7 @@ public class GoldsmithStationManager implements Listener {
 		e.setCancelled(true);
 		if (!(e.getWhoClicked() instanceof Player p)) return;
 		if (!Permissions.canUseGoldsmith(p)) {
-			p.sendMessage("§cYou do not have permission to use goldsmithing.");
+			p.sendMessage(Permissions.NOT_SKILLED_GOLDSMITH);
 			p.closeInventory();
 			return;
 		}
@@ -282,11 +282,11 @@ public class GoldsmithStationManager implements Listener {
 				p.getWorld().playSound(existing.getLoc(), Sound.ITEM_AXE_WAX_OFF, 0.7f, 2f);
 				break;
 			case CAPACITY:
-				p.sendMessage("§cYou already have the needed amount of this type");
+				p.sendMessage("§cThe piece already has enough of that material");
 				p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1f, 0.5f);
 				break;
 			case WRONG_TYPE:
-				p.sendMessage("§cThis item type is not needed for the project");
+				p.sendMessage("§cThis piece does not call for that material");
 				p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
 				break;
 			case NO_PROJECT:
@@ -358,7 +358,7 @@ public class GoldsmithStationManager implements Listener {
 				p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
 				break;
 			case WRONG_TYPE:
-				p.sendMessage("§cThis item cannot be used for goldsmithing hits");
+				p.sendMessage("§cYou cannot work the piece with that tool");
 				p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
 				break;
 			default:
