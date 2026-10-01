@@ -197,18 +197,18 @@ class GoldsmithStationManagerTest {
     manager.onInteract(right);
     manager.onInteract(right);
     assertTrue(right.isCancelled());
-    verify(player, times(1)).sendMessage(contains("permission"));
+    verify(player, times(1)).sendMessage(Permissions.NOT_SKILLED_GOLDSMITH);
     manager.clear();
     branding(true);
     PlayerInteractEvent left = click(Action.LEFT_CLICK_BLOCK);
     manager.onInteract(left);
     manager.onInteract(left);
     assertTrue(left.isCancelled());
-    verify(player, times(2)).sendMessage(contains("permission"));
+    verify(player, times(2)).sendMessage(Permissions.NOT_SKILLED_GOLDSMITH);
     manager.clear();
     branding(false);
     manager.onInteract(click(Action.LEFT_CLICK_BLOCK));
-    verify(player, times(2)).sendMessage(contains("permission"));
+    verify(player, times(2)).sendMessage(Permissions.NOT_SKILLED_GOLDSMITH);
   }
 
   @Test

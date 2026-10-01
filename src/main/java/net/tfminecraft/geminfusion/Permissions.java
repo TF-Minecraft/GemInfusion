@@ -8,6 +8,9 @@ import net.tfminecraft.geminfusion.goldsmith.GoldsmithCache;
 public class Permissions {
 	public static final String ADMIN = "geminfusion.admin";
 
+	/** Shown when a player without the goldsmith profession tries to use a goldsmithing table. */
+	public static final String NOT_SKILLED_GOLDSMITH = "§cYou are not skilled enough to practise goldsmithing.";
+
 	public static boolean isAdmin(final CommandSender commandSender) {
 		return commandSender.hasPermission(ADMIN);
 	}
@@ -27,7 +30,7 @@ public class Permissions {
 
 	public static boolean requireUseGoldsmith(Player player) {
 		if (canUseGoldsmith(player)) return true;
-		player.sendMessage("§cYou do not have permission to use goldsmithing.");
+		player.sendMessage(NOT_SKILLED_GOLDSMITH);
 		return false;
 	}
 }
