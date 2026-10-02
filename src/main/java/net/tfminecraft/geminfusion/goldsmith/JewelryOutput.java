@@ -2,6 +2,7 @@ package net.tfminecraft.geminfusion.goldsmith;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -51,6 +52,11 @@ public final class JewelryOutput {
 		double finishedTotal = GoldsmithMath.finishedTotal(recipePct, hitPct);
 		Quality quality = QualityLoader.getByAmount(finishedTotal);
 		double statCarry = QualityLoader.resolveStatFactor(finishedTotal);
+		String gemRarity = GemRarityPdc.read(gemStack);
+		double boostChance = GoldsmithCache.jewelryGemStatBoostChance(gemRarity);
+		if (boostChance > 0 && ThreadLocalRandom.current().nextDouble(100) < boostChance) {
+			statCarry = Math.min(100, statCarry + GoldsmithCache.jewelryGemStatBoost);
+		}
 
 		double projectMult = project.getTierMultiplier();
 		double qualityMult = statCarry / 100.0;
