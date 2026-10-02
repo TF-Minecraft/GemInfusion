@@ -307,6 +307,13 @@ class ConfigLoadersTest {
     assertEquals(.4, GoldsmithCache.minHitPercent);
     assertEquals(30, GoldsmithCache.hitOvershootWarnPercent);
     assertEquals("§cYou have worked this piece too much", GoldsmithCache.hitOvershootWarnMessage);
+    assertEquals(10, GoldsmithCache.jewelryGemStatBoost);
+    assertEquals(5, GoldsmithCache.jewelryGemStatBoostChance("common"));
+    assertEquals(15, GoldsmithCache.jewelryGemStatBoostChance("RARE"));
+    assertEquals(30, GoldsmithCache.jewelryGemStatBoostChance("epic"));
+    assertEquals(50, GoldsmithCache.jewelryGemStatBoostChance("legendary"));
+    assertEquals(0, GoldsmithCache.jewelryGemStatBoostChance("unknown"));
+    assertEquals(0, GoldsmithCache.jewelryGemStatBoostChance(null));
     loader.load(yaml("permission: ' '\nhit-overshoot-warn-message: ' '\n"));
     assertNull(GoldsmithCache.permission);
     loader.load(
@@ -316,13 +323,32 @@ class ConfigLoadersTest {
                 + "permission: smith\n"
                 + "min-hit-percent: 0.6\n"
                 + "hit-overshoot-warn-percent: 50\n"
-                + "hit-overshoot-warn-message: Overworked\n"));
+                + "hit-overshoot-warn-message: Overworked\n"
+                + "jewelry-gem-stat-boost:\n"
+                + "  amount: 12\n"
+                + "  chances:\n"
+                + "    common: -4\n"
+                + "    legendary: 120\n"));
     assertEquals("table", GoldsmithCache.station);
     assertEquals("branding", GoldsmithCache.brandingTool);
     assertEquals("smith", GoldsmithCache.permission);
     assertEquals(.6, GoldsmithCache.minHitPercent);
     assertEquals(50, GoldsmithCache.hitOvershootWarnPercent);
     assertEquals("Overworked", GoldsmithCache.hitOvershootWarnMessage);
+    assertEquals(12, GoldsmithCache.jewelryGemStatBoost);
+    assertEquals(0, GoldsmithCache.jewelryGemStatBoostChance("common"));
+    assertEquals(100, GoldsmithCache.jewelryGemStatBoostChance("legendary"));
+    assertEquals(0, GoldsmithCache.jewelryGemStatBoostChance("rare"));
+  }
+
+  @Test
+  void jewelryGemBoostOnlyImprovesOnSuccessfulRarityRollAndCapsAtOneHundred() {
+    assertEquals(50, GoldsmithCache.applyJewelryGemStatBoost(50, "common", 5));
+    assertEquals(50, GoldsmithCache.applyJewelryGemStatBoost(50, "unknown", 0));
+    assertEquals(50, GoldsmithCache.applyJewelryGemStatBoost(50, null, 0));
+    assertEquals(60, GoldsmithCache.applyJewelryGemStatBoost(50, "common", 4.99));
+    GoldsmithCache.jewelryGemStatBoost = 25;
+    assertEquals(100, GoldsmithCache.applyJewelryGemStatBoost(90, "legendary", 49.99));
   }
 
   @Test
