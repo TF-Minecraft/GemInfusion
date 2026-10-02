@@ -23,6 +23,12 @@ public final class GoldsmithCache {
 		return jewelryGemStatBoostChances.getOrDefault(rarityId.toLowerCase(Locale.ROOT), 0.0);
 	}
 
+	public static double applyJewelryGemStatBoost(double statFactor, String rarityId, double roll) {
+		double chance = jewelryGemStatBoostChance(rarityId);
+		if (chance <= 0 || roll >= chance) return statFactor;
+		return Math.min(100, statFactor + jewelryGemStatBoost);
+	}
+
 	private GoldsmithCache() {
 	}
 }

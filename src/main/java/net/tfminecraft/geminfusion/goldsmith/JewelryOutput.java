@@ -53,10 +53,8 @@ public final class JewelryOutput {
 		Quality quality = QualityLoader.getByAmount(finishedTotal);
 		double statCarry = QualityLoader.resolveStatFactor(finishedTotal);
 		String gemRarity = GemRarityPdc.read(gemStack);
-		double boostChance = GoldsmithCache.jewelryGemStatBoostChance(gemRarity);
-		if (boostChance > 0 && ThreadLocalRandom.current().nextDouble(100) < boostChance) {
-			statCarry = Math.min(100, statCarry + GoldsmithCache.jewelryGemStatBoost);
-		}
+		statCarry = GoldsmithCache.applyJewelryGemStatBoost(
+				statCarry, gemRarity, ThreadLocalRandom.current().nextDouble(100));
 
 		double projectMult = project.getTierMultiplier();
 		double qualityMult = statCarry / 100.0;
