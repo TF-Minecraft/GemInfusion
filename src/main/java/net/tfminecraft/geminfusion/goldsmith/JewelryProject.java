@@ -25,7 +25,8 @@ public class JewelryProject {
 
 		String tier = config.getString("tier");
 		if (tier == null || tier.isBlank()) {
-			GoldsmithLog.warn("Project '" + id + "' has no tier set, defaulting to greater.");
+			// Tiers only scale the gem stat, so gem-free projects need none.
+			if (requiresGem) GoldsmithLog.warn("Project '" + id + "' has no tier set, defaulting to greater.");
 			this.tierId = "greater";
 		} else {
 			this.tierId = tier.toLowerCase();

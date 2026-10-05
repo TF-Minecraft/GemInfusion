@@ -298,6 +298,7 @@ class GoldsmithStationManagerTest {
       when(station.markOverworkWarnedIfNeeded()).thenReturn(feedback == GoldsmithFeedback.SUCCESS);
       manager.onInteract(click(Action.LEFT_CLICK_BLOCK));
     }
+    verify(player).sendMessage("§cYou have to add all the gold before working");
     reset();
     when(station.hit(hit)).thenReturn(GoldsmithFeedback.SUCCESS);
     when(station.markOverworkWarnedIfNeeded()).thenReturn(false);
@@ -333,6 +334,12 @@ class GoldsmithStationManagerTest {
       manager.onInteract(click(Action.LEFT_CLICK_BLOCK));
       assertSame(station, manager.get(loc));
     }
+    verify(player).sendMessage("§cYou have to add all the gold before finishing");
+    reset();
+    when(project.requiresGem()).thenReturn(true);
+    when(station.canFinish()).thenReturn(GoldsmithFeedback.LACKING_ITEMS);
+    manager.onInteract(click(Action.LEFT_CLICK_BLOCK));
+    verify(player).sendMessage("§cYou have to add all the gold and the gem before finishing");
     try (var output = mockStatic(JewelryOutput.class)) {
       reset();
       when(station.canFinish()).thenReturn(GoldsmithFeedback.SUCCESS);
@@ -352,6 +359,8 @@ class GoldsmithStationManagerTest {
     try (var output = mockStatic(JewelryOutput.class)) {
       for (Quality chosen : Arrays.asList(null, quality)) {
         reset();
+        // Gem-free projects (keys) have no quality and no stat carry line.
+        when(project.requiresGem()).thenReturn(chosen != null);
         JewelryCraftResult result =
             new JewelryCraftResult(new ItemStack(Material.DIAMOND), 90, 80, 80, 60, chosen);
         output.when(() -> JewelryOutput.build(station, player)).thenReturn(result);
@@ -361,6 +370,7 @@ class GoldsmithStationManagerTest {
       assertEquals(2, world.getEntitiesByClass(org.bukkit.entity.Item.class).size());
       verify(station, times(2)).cancel();
       verify(player).sendMessage("§7Quality: Fine");
+      verify(player).sendMessage("§7Stat carry: §e60%");
     }
   }
 

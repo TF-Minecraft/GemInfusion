@@ -79,7 +79,7 @@ class ConfigLoadersTest {
       assertTrue(p.getTierMultiplier() > 0);
       assertFalse(p.getRecipe().isEmpty());
       assertFalse(p.getMaterialsByType().isEmpty());
-      assertTrue(p.requiresGem());
+      assertEquals(!p.getId().equals("gold_key"), p.requiresGem());
       assertThrows(UnsupportedOperationException.class, () -> p.getRecipe().clear());
     }
     for (GoldsmithMaterial m : GoldsmithMaterialLoader.get().values()) {
@@ -185,8 +185,14 @@ class ConfigLoadersTest {
                       + " gold.-1, unknown.3]\n"
                       + "blankTier:\n"
                       + "  item: m.ring\n"
-                      + "  tier: ' '\n"));
-      assertEquals(Set.of("ring", "blankTier"), JewelryProjectLoader.get().keySet());
+                      + "  tier: ' '\n"
+                      + "gemNoTier:\n"
+                      + "  item: m.ring\n"
+                      + "  gem: 1\n"));
+      assertEquals(
+          Set.of("ring", "blankTier", "gemNoTier"), JewelryProjectLoader.get().keySet());
+      assertEquals("greater", JewelryProjectLoader.getByString("gemNoTier").getTierId());
+      assertTrue(JewelryProjectLoader.getByString("gemNoTier").requiresGem());
       JewelryProject ring = JewelryProjectLoader.getByString("ring");
       assertEquals("greater", ring.getTierId());
       assertEquals("greater", JewelryProjectLoader.getByString("blankTier").getTierId());

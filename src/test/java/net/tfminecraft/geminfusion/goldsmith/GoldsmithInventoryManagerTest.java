@@ -69,15 +69,18 @@ class GoldsmithInventoryManagerTest {
   @Test
   void validIconsAreClonedDecoratedAndRemainingSlotsFilled() {
     project("ring", "minecraft.DIAMOND", "mAJOR", true);
-    project("band", "ia.band", null, false);
-    project("blank", "minecraft.GOLD_INGOT", " ", false);
+    project("band", "ia.band", null, true);
+    project("blank", "minecraft.GOLD_INGOT", " ", true);
+    project("key", "minecraft.GOLD_NUGGET", null, false);
     ItemStack original = new ItemStack(Material.DIAMOND, 6);
     when(items.getCreator().getItemFromPath("minecraft.DIAMOND")).thenReturn(original);
     when(items.getCreator().getItemFromPath("ia.band"))
         .thenReturn(new ItemStack(Material.GOLD_INGOT));
     when(items.getCreator().getItemFromPath("minecraft.GOLD_INGOT"))
         .thenReturn(new ItemStack(Material.GOLD_INGOT));
-    assertEquals(3, new GoldsmithInventoryManager().openMenu(player));
+    when(items.getCreator().getItemFromPath("minecraft.GOLD_NUGGET"))
+        .thenReturn(new ItemStack(Material.GOLD_NUGGET));
+    assertEquals(4, new GoldsmithInventoryManager().openMenu(player));
     Inventory inv = opened();
     ItemStack icon = inv.getItem(0);
     assertEquals(1, icon.getAmount());
@@ -92,7 +95,9 @@ class GoldsmithInventoryManagerTest {
             .get(GoldsmithInventoryManager.projectKey(), PersistentDataType.STRING));
     assertTrue(inv.getItem(1).getItemMeta().getLore().contains("§7Tier: §eGreater"));
     assertTrue(inv.getItem(2).getItemMeta().getLore().contains("§7Tier: §eGreater"));
-    for (int slot = 3; slot < 27; slot++)
+    assertTrue(
+        inv.getItem(3).getItemMeta().getLore().stream().noneMatch(l -> l.startsWith("§7Tier")));
+    for (int slot = 4; slot < 27; slot++)
       assertEquals(Material.GRAY_STAINED_GLASS_PANE, inv.getItem(slot).getType());
   }
 

@@ -206,6 +206,7 @@ class GemOutputTest {
   void jewelryRejectsMissingInputsInvalidGemsAndUnreadableStats() {
     GoldsmithStation station = mock(GoldsmithStation.class);
     JewelryProject project = mock(JewelryProject.class);
+    when(project.requiresGem()).thenReturn(true);
     ItemStack gemItem = tagged(Material.DIAMOND);
     try (var log = mockStatic(GoldsmithLog.class);
         var valid = mockStatic(InfusedGemValidator.class);
@@ -227,8 +228,12 @@ class GemOutputTest {
 
   @Test
   void jewelryCarriesScaledStatIntoFreshHistoryAndQualityLore() throws Exception {
+    // The rarity boost is a random roll; switch it off so the carry is exact.
+    var boostChances = GoldsmithCache.jewelryGemStatBoostChances;
+    GoldsmithCache.jewelryGemStatBoostChances = Map.of();
     GoldsmithStation station = mock(GoldsmithStation.class);
     JewelryProject project = mock(JewelryProject.class);
+    when(project.requiresGem()).thenReturn(true);
     ItemStack gemItem = tagged(Material.DIAMOND),
         base = tagged(Material.GOLD_INGOT),
         out = tagged(Material.GOLD_INGOT);
@@ -282,6 +287,8 @@ class GemOutputTest {
               argThat(v -> v instanceof DoubleData d && d.getValue() == 3.0));
       verify(history)
           .registerExternalData(argThat(v -> v instanceof DoubleData d && d.getValue() == 3.0));
+    } finally {
+      GoldsmithCache.jewelryGemStatBoostChances = boostChances;
     }
   }
 
@@ -289,6 +296,7 @@ class GemOutputTest {
   void jewelryFallsBackAfterMatchingNonnumericStatAndHandlesFailedBuild() throws Exception {
     GoldsmithStation station = mock(GoldsmithStation.class);
     JewelryProject project = mock(JewelryProject.class);
+    when(project.requiresGem()).thenReturn(true);
     ItemStack gemItem = tagged(Material.DIAMOND), base = tagged(Material.DIAMOND);
     when(station.getProject()).thenReturn(project);
     when(station.getGem()).thenReturn(gemItem);
@@ -326,6 +334,7 @@ class GemOutputTest {
   void jewelryHandlesFallbackStatsInvalidOutputPathsAndAbsentHistory() throws Exception {
     GoldsmithStation station = mock(GoldsmithStation.class);
     JewelryProject project = mock(JewelryProject.class);
+    when(project.requiresGem()).thenReturn(true);
     ItemStack gemItem = tagged(Material.DIAMOND),
         base = tagged(Material.DIAMOND),
         out = tagged(Material.DIAMOND);
@@ -375,6 +384,42 @@ class GemOutputTest {
       when(api.getCreator().getItemFromPath("ia.bad")).thenReturn(base);
       when(MMOItems.plugin.getStats().get("ATTACK_DAMAGE")).thenReturn(null);
       assertNull(JewelryOutput.build(station, player));
+    }
+  }
+
+  @Test
+  void gemFreeProjectGivesPlainItemWithProvenanceAndNoQuality() {
+    GoldsmithStation station = mock(GoldsmithStation.class);
+    JewelryProject project = mock(JewelryProject.class);
+    ItemStack key = tagged(Material.GOLD_NUGGET);
+    key.setAmount(3);
+    when(station.getProject()).thenReturn(project);
+    when(station.getRecipePercent()).thenReturn(90.0);
+    when(station.getHitPercent()).thenReturn(80.0);
+    when(project.getItem()).thenReturn("m.keys.gold_key");
+    GoldsmithMaterial material = mock(GoldsmithMaterial.class);
+    when(material.getPath()).thenReturn("m.materials.rough_gold");
+    when(station.getDepositedByMaterial()).thenReturn(Map.of(material, 5));
+    ItemAPI api = mock(ItemAPI.class, RETURNS_DEEP_STUBS);
+    when(api.getCreator().getItemFromPath("m.keys.gold_key")).thenReturn(key);
+    try (var libs = mockStatic(TLibs.class);
+        var log = mockStatic(GoldsmithLog.class);
+        var constructed = live(m -> {})) {
+      libs.when(TLibs::getItemAPI).thenReturn(api);
+      JewelryCraftResult result = JewelryOutput.build(station, player);
+      assertNotNull(result);
+      assertSame(key, result.getItem());
+      assertEquals(1, key.getAmount());
+      assertEquals("Original", key.getItemMeta().getDisplayName());
+      assertEquals(Map.of("m.materials.rough_gold", 5), GoldsmithProvenance.read(key));
+      assertEquals(GoldsmithMath.finishedTotal(90, 80), result.getFinishedTotal());
+      assertEquals(0, result.getStatCarryPercent());
+      assertNull(result.getQuality());
+      assertTrue(constructed.constructed().isEmpty());
+      verify(station, never()).getGem();
+      when(api.getCreator().getItemFromPath("m.keys.gold_key")).thenReturn(null);
+      assertNull(JewelryOutput.build(station, player));
+      log.verify(() -> GoldsmithLog.warn(contains("Could not build output")));
     }
   }
 }

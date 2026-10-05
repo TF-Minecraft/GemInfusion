@@ -31,6 +31,9 @@ public final class JewelryOutput {
 
 	public static JewelryCraftResult build(GoldsmithStation station, Player player) {
 		JewelryProject project = station.getProject();
+		if (project != null && !project.requiresGem()) {
+			return buildPlain(station, project);
+		}
 		ItemStack gemStack = station.getGem();
 		if (project == null || gemStack == null) {
 			GoldsmithLog.warn("Jewelry output missing project or gem.");
@@ -61,12 +64,8 @@ public final class JewelryOutput {
 		double attributeMult = 1.0 + AttributeInfluence.jewelry.forPlayer(player);
 		double amount = Math.floor(roll.value * projectMult * qualityMult * attributeMult * 10000) / 10000;
 
-		String path = project.getItem();
-		ItemStack base = TLibs.getItemAPI().getCreator().getItemFromPath(path);
-		if (base == null || (path != null && path.toLowerCase().startsWith("ia.") && base.getType() == Material.DIRT)) {
-			GoldsmithLog.warn("Could not build output for project " + project.getId() + " (" + path + "). Station left intact.");
-			return null;
-		}
+		ItemStack base = baseItem(project);
+		if (base == null) return null;
 
 		LiveMMOItem mmo = new LiveMMOItem(NBTItem.get(base));
 		if (!applyStat(mmo, roll.statId, amount)) {
@@ -83,6 +82,28 @@ public final class JewelryOutput {
 		out.setAmount(1);
 		GoldsmithProvenance.stamp(out, station.getDepositedByMaterial());
 		return new JewelryCraftResult(out, recipePct, hitPct, finishedTotal, statCarry, quality);
+	}
+
+	/** Gem-free projects (e.g. keys) give the configured item as is: no stat, no quality. */
+	private static JewelryCraftResult buildPlain(GoldsmithStation station, JewelryProject project) {
+		ItemStack out = baseItem(project);
+		if (out == null) return null;
+		out.setAmount(1);
+		GoldsmithProvenance.stamp(out, station.getDepositedByMaterial());
+		double recipePct = station.getRecipePercent();
+		double hitPct = station.getHitPercent();
+		return new JewelryCraftResult(out, recipePct, hitPct,
+				GoldsmithMath.finishedTotal(recipePct, hitPct), 0, null);
+	}
+
+	private static ItemStack baseItem(JewelryProject project) {
+		String path = project.getItem();
+		ItemStack base = TLibs.getItemAPI().getCreator().getItemFromPath(path);
+		if (base == null || (path != null && path.toLowerCase().startsWith("ia.") && base.getType() == Material.DIRT)) {
+			GoldsmithLog.warn("Could not build output for project " + project.getId() + " (" + path + "). Station left intact.");
+			return null;
+		}
+		return base;
 	}
 
 	private static void applyQualityLore(MMOItem mmo, Quality quality) {
