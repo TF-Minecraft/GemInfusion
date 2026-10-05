@@ -49,7 +49,9 @@ public class GoldsmithInventoryManager {
 		ItemMeta meta = icon.getItemMeta();
 		meta.setDisplayName(project.getName());
 		List<String> lore = new ArrayList<>();
-		lore.add("§7Tier: §e" + formatTierName(project.getTierId()));
+		if (project.requiresGem()) {
+			lore.add("§7Tier: §e" + formatTierName(project.getTierId()));
+		}
 		for (Map.Entry<String, Integer> e : project.getMaterialsByType().entrySet()) {
 			lore.add("§7Requires §a" + e.getValue() + " " + GoldsmithMaterialTypeLoader.display(e.getKey()));
 		}

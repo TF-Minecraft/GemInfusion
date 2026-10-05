@@ -321,7 +321,7 @@ public class GoldsmithStationManager implements Listener {
 			}
 			GoldsmithFeedback finish = station.canFinish();
 			if (finish == GoldsmithFeedback.LACKING_ITEMS) {
-				p.sendMessage("§cYou have to add all the gold and the gem before finishing");
+				p.sendMessage(lackingItemsMessage(station, "finishing"));
 				p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
 				return;
 			}
@@ -354,7 +354,7 @@ public class GoldsmithStationManager implements Listener {
 				markDirty();
 				break;
 			case LACKING_ITEMS:
-				p.sendMessage("§cYou have to add all the gold and the gem before working");
+				p.sendMessage(lackingItemsMessage(station, "working"));
 				p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
 				break;
 			case WRONG_TYPE:
@@ -401,9 +401,16 @@ public class GoldsmithStationManager implements Listener {
 		if (result.getQuality() != null) {
 			p.sendMessage("§7Quality: " + result.getQuality().getName());
 		}
-		p.sendMessage("§7Stat carry: §e" + Math.round(result.getStatCarryPercent()) + "%");
+		if (station.getProject().requiresGem()) {
+			p.sendMessage("§7Stat carry: §e" + Math.round(result.getStatCarryPercent()) + "%");
+		}
 		station.cancel();
 		remove(station.getLoc());
+	}
+
+	private static String lackingItemsMessage(GoldsmithStation station, String action) {
+		String gem = station.getProject().requiresGem() ? " and the gem" : "";
+		return "§cYou have to add all the gold" + gem + " before " + action;
 	}
 
 	private boolean isBranding(ItemStack item) {

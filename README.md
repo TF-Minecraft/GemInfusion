@@ -10,7 +10,7 @@ GemInfusion gives gemstones rolled bonuses and turns them into a resource for eq
 - **Rarity and stat rolls** — gems range from common to legendary and provide bonuses such as health, armour, damage, or damage reduction according to their type.
 - **Character influence** — Intelligence affects an infused gem's rolled stat, while Dexterity separately influences the bonus carried into jewellery.
 - **Socketed equipment** — connects gems with MMOItems sockets and preserves rarity information through socketing and removal.
-- **Goldsmithing projects** — craft rings, necklaces, medals, and other pieces from metal materials and an infused gem at a smithing station. Each finished piece records the metal materials actually used, so recycling can return those rather than the listed recipe.
+- **Goldsmithing projects** — craft rings, necklaces, medals, and other pieces from metal materials and an infused gem at a smithing station. Each finished piece records the metal materials actually used, so recycling can return those rather than the listed recipe. Projects set to `gem: 0`, such as the Golden Key, need only gold and give the item without a stat or quality.
 - **Craftsmanship matters** — recipe accuracy, tool work, project tier, and finishing quality shape how much of the gem's bonus reaches the finished piece.
 
 The same gemstone links discovery and craft: its infusion determines the starting bonus, and the goldsmith's work shapes the jewellery made from it. Legendary infusions can also be announced to other players.

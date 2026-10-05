@@ -1,4 +1,5 @@
 # gem: 1 means one infused gem must sit on the bench before hammering.
+# gem: 0 projects give the item as is (no stat, no quality); tier is not needed.
 gold_ring:
     name: "§fGolden Ring"
     item: m.ring.fine_ring
@@ -114,3 +115,11 @@ bracelet:
         - rough_gold.1
         - moldable_gold.4
         - shiny_gold.5
+gold_key:
+    name: "§6Golden Key"
+    item: m.keys.gold_key
+    gem: 0
+    recipe:
+        - rough_gold.5
+        - moldable_gold.1
+        - shiny_gold.4
