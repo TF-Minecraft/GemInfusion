@@ -22,6 +22,7 @@ import net.Indyuce.mmoitems.stat.data.StringListData;
 import net.Indyuce.mmoitems.stat.type.ItemStat;
 import net.Indyuce.mmoitems.stat.type.NameData;
 import net.Indyuce.mmoitems.stat.type.StatHistory;
+import net.tfminecraft.geminfusion.goldsmith.InfusedGemValidator;
 
 public final class InfusedGemBuilder {
 	private InfusedGemBuilder() {
@@ -57,12 +58,13 @@ public final class InfusedGemBuilder {
 		mmo.setData(ItemStats.SUCCESS_RATE, new DoubleData(Math.floor(Math.random() * maxChance) + 40));
 	}
 
+	/** A null rarity (unknown after a reset) leaves the rarity out of the name and lore. */
 	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
 	@SuppressWarnings("deprecation")
 	public static void applyCosmetics(MMOItem mmo, Gemstone gem, GemRarity rarity) {
 		mmo.setData(ItemStats.DISPLAYED_TYPE, new StringData("Infused Gemstone"));
 
-		String infusedName = rarity.getName() + " Infused " + gem.getName();
+		String infusedName = (rarity == null ? "" : rarity.getName() + " ") + "Infused " + gem.getName();
 		StringData itemName = (StringData) mmo.getData(ItemStats.NAME);
 		if (itemName == null) {
 			itemName = new StringData(infusedName);
@@ -81,17 +83,37 @@ public final class InfusedGemBuilder {
 
 		List<String> loreList = new ArrayList<>();
 		loreList.add(ChatColor.GRAY + "Gemstone Type: " + gem.getSocketNameColour() + gem.getSocketColour());
-		loreList.add(ChatColor.GRAY + "Rarity: " + rarity.getName());
+		if (rarity != null) {
+			loreList.add(ChatColor.GRAY + "Rarity: " + rarity.getName());
+		}
 		mmo.setData(ItemStats.LORE, new StringListData(loreList));
 	}
 
 	public static ItemStack applyCosmeticsToItem(ItemStack item, Gemstone gem, GemRarity rarity) {
-		if (item == null || item.getType().isAir() || gem == null || rarity == null) {
+		if (item == null || item.getType().isAir() || gem == null) {
 			return item;
 		}
 		LiveMMOItem mmo = new LiveMMOItem(NBTItem.get(item));
 		applyCosmetics(mmo, gem, rarity);
-		return finalizeItem(mmo.newBuilder().build(), rarity.getId());
+		ItemStack rebuilt = finalizeItem(mmo.newBuilder().build(), rarity == null ? null : rarity.getId());
+		if (rebuilt != null) {
+			rebuilt.setAmount(item.getAmount());
+		}
+		return rebuilt;
+	}
+
+	/**
+	 * Gives a reset infused gem (see {@link InfusedGemValidator#isReset}) its infused look back,
+	 * keeping its rolled stats. Its rarity is kept only when the item still records it.
+	 */
+	public static ItemStack restoreReset(ItemStack item) {
+		if (!InfusedGemValidator.isReset(item)) {
+			return item;
+		}
+		NBTItem nbt = NBTItem.get(item);
+		Gemstone gem = ConfigLoader.findGemByMmoItem(nbt.getType(), nbt.getString("MMOITEMS_ITEM_ID"));
+		GemRarity rarity = ConfigLoader.findRarityById(GemRarityPdc.read(item));
+		return applyCosmeticsToItem(item, gem, rarity);
 	}
 
 	public static ItemStack buildInfusedGem(Gemstone gem, GemRarity rarity, int infusionAmount, Player player) {

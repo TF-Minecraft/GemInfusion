@@ -8,6 +8,7 @@ import java.util.*;
 import net.Indyuce.mmoitems.ItemStats;
 import net.Indyuce.mmoitems.api.event.item.UnsocketGemStoneEvent;
 import net.Indyuce.mmoitems.stat.data.*;
+import net.tfminecraft.geminfusion.goldsmith.InfusedGemValidator;
 import net.tfminecraft.tlibs.event.MMOItemRebuildEvent;
 import net.tfminecraft.tlibs.event.MMOItemRebuildEvent.RebuildReason;
 import net.tfminecraft.tlibs.socket.GemSocketsNbtEditor;
@@ -221,8 +222,13 @@ class SocketIntegrationTest {
       sockets.when(() -> GemSocketsNbtEditor.getSockets(same(old))).thenReturn(data);
       when(data.getGems()).thenReturn(List.of(unrelated));
       new GemSocketRebuildListener().onRebuild(event);
+      when(data.getGems()).thenReturn(List.of(unrelated, entry));
       SocketRarityStore.write(old, Map.of());
       new GemSocketRebuildListener().onRebuild(event);
+      verify(scheduler, times(2)).runTask(same(InfusionMain.plugin), task.capture());
+      task.getValue().run();
+      restorer.verify(
+          () -> UnsocketedGemRestorer.restore(eq(player), isNull(), same(gem), anyMap()));
       sockets.when(() -> GemSocketsNbtEditor.getGemstoneUuids(same(old))).thenReturn(Set.of());
       new GemSocketRebuildListener().onRebuild(event);
     }
@@ -248,8 +254,10 @@ class SocketIntegrationTest {
     when(nbt.getType()).thenReturn("GEM_STONE");
     when(nbt.getString("MMOITEMS_ITEM_ID")).thenReturn("RUBY");
     try (var api = mockStatic(NBTItem.class);
-        var builder = mockStatic(InfusedGemBuilder.class)) {
+        var builder = mockStatic(InfusedGemBuilder.class);
+        var valid = mockStatic(InfusedGemValidator.class)) {
       api.when(() -> NBTItem.get(any(ItemStack.class))).thenReturn(nbt);
+      valid.when(() -> InfusedGemValidator.isReset(any())).thenReturn(true);
       builder
           .when(() -> InfusedGemBuilder.applyCosmeticsToItem(any(), same(gem), same(rarity)))
           .thenReturn(fixed);
@@ -273,11 +281,21 @@ class SocketIntegrationTest {
       verify(inventory, times(3)).setItem(1, fixed);
       UnsocketedGemRestorer.restore(actor, "rare", gem, Map.of(0, first, 1, second));
       verify(inventory, times(3)).setItem(1, fixed);
-      for (String display : Arrays.asList(null, " ", "Blank Gemstone", "Infused Gemstone")) {
-        when(nbt.hasTag(ItemStats.DISPLAYED_TYPE.getNBTPath())).thenReturn(true);
-        when(nbt.getString(ItemStats.DISPLAYED_TYPE.getNBTPath())).thenReturn(display);
-        UnsocketedGemRestorer.restore(actor, "rare", gem, Map.of());
-      }
+      // A genuinely blank gem (no infusion stat) is never turned into an infused one.
+      valid.when(() -> InfusedGemValidator.isReset(any())).thenReturn(false);
+      UnsocketedGemRestorer.restore(actor, "rare", gem, Map.of());
+      verify(inventory, times(3)).setItem(1, fixed);
+      valid.when(() -> InfusedGemValidator.isReset(any())).thenReturn(true);
+      // Without a stored rarity the gem is still restored, just without one.
+      ItemStack noRarity = tagged(Material.GOLD_INGOT);
+      builder
+          .when(() -> InfusedGemBuilder.applyCosmeticsToItem(any(), same(gem), isNull()))
+          .thenReturn(noRarity);
+      when(inventory.getItem(1)).thenReturn(null);
+      UnsocketedGemRestorer.restore(actor, null, gem, Map.of());
+      UnsocketedGemRestorer.restore(actor, "missing", gem, Map.of());
+      verify(inventory, times(2)).setItem(0, noRarity);
+      when(inventory.getItem(1)).thenReturn(second);
       when(inventory.getItem(0)).thenReturn(new ItemStack(Material.AIR));
       when(inventory.getItem(1)).thenReturn(null);
       UnsocketedGemRestorer.restore(actor, "rare", gem, Map.of());

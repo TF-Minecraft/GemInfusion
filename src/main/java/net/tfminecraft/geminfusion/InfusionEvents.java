@@ -20,6 +20,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.EquipmentSlot;
 import net.tfminecraft.geminfusion.goldsmith.GoldsmithLog;
+import net.tfminecraft.geminfusion.goldsmith.InfusedGemValidator;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
@@ -61,6 +62,12 @@ public class InfusionEvents implements Listener{
 		NBTItem nbt = NBTItem.get(item);
 		if(nbt.hasType() == false) return;
 		if(!nbt.getString("MMOITEMS_DISPLAYED_TYPE").equalsIgnoreCase("Blank Gemstone")) return;
+		if(InfusedGemValidator.isReset(item)) {
+			// Infusing again would wipe the roll; give the gem its infused look back instead.
+			p.getInventory().setItemInMainHand(InfusedGemBuilder.restoreReset(item));
+			p.sendMessage(ChatColor.YELLOW + "This gem already holds an infusion. Its glow returns.");
+			return;
+		}
 		for(Gemstone gem : ConfigLoader.loadedGems) {
 			if(nbt.getType().equalsIgnoreCase(gem.getMMOItemString().split("\\.")[0]) && nbt.getString("MMOITEMS_ITEM_ID").equalsIgnoreCase(gem.getMMOItem().getId())) {
 				if(gem.isLocationSpecific() == true) {
