@@ -28,8 +28,10 @@ public final class UnsocketedGemRestorer {
 		}
 
 		PlayerInventory inventory = player.getInventory();
-		ItemStack item = inventory.getItem(slot);
-		inventory.setItem(slot, InfusedGemBuilder.applyCosmeticsToItem(item, gem, rarity));
+		ItemStack restored = InfusedGemBuilder.applyCosmeticsToItem(inventory.getItem(slot), gem, rarity);
+		if (restored != null) {
+			inventory.setItem(slot, restored);
+		}
 	}
 
 	private static Integer findTargetSlot(Player player, Gemstone gem, Map<Integer, ItemStack> beforeInventory) {

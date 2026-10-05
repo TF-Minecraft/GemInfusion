@@ -64,7 +64,9 @@ public class InfusionEvents implements Listener{
 		if(!nbt.getString("MMOITEMS_DISPLAYED_TYPE").equalsIgnoreCase("Blank Gemstone")) return;
 		if(InfusedGemValidator.isReset(item)) {
 			// Infusing again would wipe the roll; give the gem its infused look back instead.
-			p.getInventory().setItemInMainHand(InfusedGemBuilder.restoreReset(item));
+			ItemStack restored = InfusedGemBuilder.restoreReset(item);
+			if(restored == null) return;
+			p.getInventory().setItemInMainHand(restored);
 			p.sendMessage(ChatColor.YELLOW + "This gem already holds an infusion. Its glow returns.");
 			return;
 		}

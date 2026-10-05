@@ -160,6 +160,15 @@ class InfusionEventsTest {
     verify(inventory).setItemInMainHand(restored);
     verify(player).sendMessage(contains("already holds an infusion"));
     assertTrue(events.currentStations.isEmpty());
+    // A failed rebuild keeps the original gem and does not infuse it.
+    try (var valid = mockStatic(InfusedGemValidator.class);
+        var builder = mockStatic(InfusedGemBuilder.class)) {
+      valid.when(() -> InfusedGemValidator.isReset(hand)).thenReturn(true);
+      events.addGemEvent(event(Action.RIGHT_CLICK_BLOCK, EquipmentSlot.HAND));
+    }
+    verify(inventory, times(1)).setItemInMainHand(any());
+    verify(player, times(1)).sendMessage(contains("already holds an infusion"));
+    assertTrue(events.currentStations.isEmpty());
     verify(hand, never()).setAmount(anyInt());
   }
 

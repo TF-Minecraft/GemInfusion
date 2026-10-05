@@ -295,6 +295,12 @@ class SocketIntegrationTest {
       UnsocketedGemRestorer.restore(actor, null, gem, Map.of());
       UnsocketedGemRestorer.restore(actor, "missing", gem, Map.of());
       verify(inventory, times(2)).setItem(0, noRarity);
+      // A failed rebuild leaves the gem in place.
+      builder
+          .when(() -> InfusedGemBuilder.applyCosmeticsToItem(any(), same(gem), isNull()))
+          .thenReturn(null);
+      UnsocketedGemRestorer.restore(actor, null, gem, Map.of());
+      verify(inventory, never()).setItem(eq(0), isNull());
       when(inventory.getItem(1)).thenReturn(second);
       when(inventory.getItem(0)).thenReturn(new ItemStack(Material.AIR));
       when(inventory.getItem(1)).thenReturn(null);
