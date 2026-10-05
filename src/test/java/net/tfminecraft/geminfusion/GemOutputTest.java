@@ -151,6 +151,13 @@ class GemOutputTest {
     assertEquals("Rare Infused Ruby", original.getString());
     verify(output).setStatHistory(ItemStats.NAME, history);
     verify(output, times(2)).setData(eq(ItemStats.LORE), any(StringListData.class));
+    MMOItem unknown = mock(MMOItem.class);
+    InfusedGemBuilder.applyCosmetics(unknown, gem, null);
+    verify(unknown).replaceData(eq(ItemStats.NAME), name.capture());
+    assertEquals("Infused Ruby", name.getValue().getString());
+    var lore = ArgumentCaptor.forClass(StringListData.class);
+    verify(unknown).setData(eq(ItemStats.LORE), lore.capture());
+    assertEquals(1, lore.getValue().getList().size());
   }
 
   @Test
@@ -166,13 +173,18 @@ class GemOutputTest {
       assertSame(result, InfusedGemBuilder.buildInfusedGem(template, rarity, 3, player));
       assertEquals("rare", GemRarityPdc.read(result));
       assertTrue(result.getItemMeta().hasItemFlag(ItemFlag.HIDE_ENCHANTS));
+      blank.setAmount(2);
       assertSame(result, InfusedGemBuilder.applyCosmeticsToItem(blank, gem, rarity));
+      assertEquals(2, result.getAmount());
+      assertSame(result, InfusedGemBuilder.applyCosmeticsToItem(blank, gem, null));
+    }
+    try (var constructed = live(m -> when(m.newBuilder().build()).thenReturn(null))) {
+      assertNull(InfusedGemBuilder.applyCosmeticsToItem(blank, gem, rarity));
     }
     assertNull(InfusedGemBuilder.applyCosmeticsToItem(null, gem, rarity));
     ItemStack air = new ItemStack(Material.AIR);
     assertSame(air, InfusedGemBuilder.applyCosmeticsToItem(air, gem, rarity));
     assertSame(blank, InfusedGemBuilder.applyCosmeticsToItem(blank, null, rarity));
-    assertSame(blank, InfusedGemBuilder.applyCosmeticsToItem(blank, gem, null));
     assertNull(InfusedGemBuilder.finalizeItem(null, "rare"));
     assertSame(air, InfusedGemBuilder.finalizeItem(air, "rare"));
   }
@@ -200,6 +212,64 @@ class GemOutputTest {
     assertFalse(InfusedGemValidator.isGemstoneCandidate(item));
     ConfigLoader.loadedGems.add(gem);
     assertTrue(InfusedGemValidator.isGemstoneCandidate(item));
+  }
+
+  @Test
+  void blankGemKeepingItsInfusionStatCountsAsInfusedAndReset() throws Exception {
+    ItemStack item = tagged(Material.DIAMOND);
+    String path = ItemStats.ATTACK_DAMAGE.getNBTPath();
+    gem.addStat(stat("common", "MISSING", 1));
+    gem.addStat(stat("rare", "ATTACK_DAMAGE", 2));
+    when(MMOItems.plugin.getStats().get("MISSING")).thenReturn(null);
+    when(nbt.getString("MMOITEMS_DISPLAYED_TYPE")).thenReturn("Blank Gemstone");
+    assertFalse(InfusedGemValidator.isInfused(item));
+    assertFalse(InfusedGemValidator.isReset(item));
+    when(nbt.hasTag(path)).thenReturn(true);
+    assertFalse(InfusedGemValidator.isReset(item));
+    when(nbt.getDouble(path)).thenReturn(4.1);
+    assertTrue(InfusedGemValidator.isInfused(item));
+    assertTrue(InfusedGemValidator.isReset(item));
+    when(nbt.getString("MMOITEMS_DISPLAYED_TYPE")).thenReturn("Sword");
+    assertFalse(InfusedGemValidator.isInfused(item));
+    assertFalse(InfusedGemValidator.isReset(item));
+    when(nbt.getString("MMOITEMS_DISPLAYED_TYPE")).thenReturn("Infused Gemstone");
+    assertFalse(InfusedGemValidator.isReset(item));
+    when(nbt.getString("MMOITEMS_DISPLAYED_TYPE")).thenReturn("Blank Gemstone");
+    when(nbt.getString("MMOITEMS_ITEM_ID")).thenReturn("OTHER");
+    assertFalse(InfusedGemValidator.isReset(item));
+    when(nbt.hasType()).thenReturn(false);
+    assertFalse(InfusedGemValidator.isReset(item));
+    assertFalse(InfusedGemValidator.isReset(null));
+    assertFalse(InfusedGemValidator.isReset(new ItemStack(Material.AIR)));
+  }
+
+  @Test
+  void restoreResetRebuildsOnlyResetGemsKeepingKnownRarityAndAmount() throws Exception {
+    ItemStack item = tagged(Material.DIAMOND), withRarity = tagged(Material.DIAMOND);
+    String path = ItemStats.ATTACK_DAMAGE.getNBTPath();
+    gem.addStat(stat("rare", "ATTACK_DAMAGE", 2));
+    when(nbt.getString("MMOITEMS_DISPLAYED_TYPE")).thenReturn("Blank Gemstone");
+    assertSame(item, InfusedGemBuilder.restoreReset(item));
+    when(nbt.hasTag(path)).thenReturn(true);
+    when(nbt.getDouble(path)).thenReturn(4.1);
+    ConfigLoader.loadedRarities.add(rarity);
+    item.setAmount(3);
+    try (var constructed = live(m -> when(m.newBuilder().build()).thenReturn(withRarity))) {
+      GemRarityPdc.write(item, "rare");
+      assertSame(withRarity, InfusedGemBuilder.restoreReset(item));
+      assertEquals("rare", GemRarityPdc.read(withRarity));
+      assertEquals(3, withRarity.getAmount());
+      verify(constructed.constructed().get(0))
+          .replaceData(eq(ItemStats.NAME), argThat(d -> "Rare Infused Ruby".equals(((StringData) d).getString())));
+    }
+    ItemStack unknown = tagged(Material.DIAMOND), withoutRarity = tagged(Material.DIAMOND);
+    try (var constructed = live(m -> when(m.newBuilder().build()).thenReturn(withoutRarity))) {
+      assertSame(withoutRarity, InfusedGemBuilder.restoreReset(unknown));
+      assertNull(GemRarityPdc.read(withoutRarity));
+      verify(constructed.constructed().get(0))
+          .replaceData(eq(ItemStats.NAME), argThat(d -> "Infused Ruby".equals(((StringData) d).getString())));
+    }
+    ConfigLoader.loadedRarities.clear();
   }
 
   @Test

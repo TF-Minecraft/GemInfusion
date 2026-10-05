@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import io.lumine.mythic.lib.api.item.NBTItem;
 import java.util.*;
 import net.Indyuce.mmoitems.api.item.mmoitem.MMOItem;
+import net.tfminecraft.geminfusion.goldsmith.InfusedGemValidator;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.*;
@@ -46,6 +47,7 @@ class InfusionEventsTest {
     when(block.getLocation()).thenReturn(location);
     when(block.getType()).thenReturn(Material.ENCHANTING_TABLE);
     when(hand.getAmount()).thenReturn(5);
+    when(hand.getType()).thenReturn(Material.AMETHYST_SHARD);
     when(nbt.hasType()).thenReturn(true);
     when(nbt.getType()).thenReturn("GEM_STONE");
     when(nbt.getString("MMOITEMS_DISPLAYED_TYPE")).thenReturn("Blank Gemstone");
@@ -142,6 +144,32 @@ class InfusionEventsTest {
     events.addGemEvent(event(Action.RIGHT_CLICK_BLOCK, EquipmentSlot.HAND));
     assertEquals(
         location.clone().add(.5, 1, .5), events.currentStations.getFirst().getParticleLocation());
+  }
+
+  @Test
+  void resetInfusedGemIsRestoredInHandInsteadOfInfusedAgain() {
+    ItemStack restored = mock(ItemStack.class);
+    try (var valid = mockStatic(InfusedGemValidator.class);
+        var builder = mockStatic(InfusedGemBuilder.class)) {
+      valid.when(() -> InfusedGemValidator.isReset(hand)).thenReturn(true);
+      builder.when(() -> InfusedGemBuilder.restoreReset(hand)).thenReturn(restored);
+      PlayerInteractEvent click = event(Action.RIGHT_CLICK_BLOCK, EquipmentSlot.HAND);
+      events.addGemEvent(click);
+      assertTrue(click.isCancelled());
+    }
+    verify(inventory).setItemInMainHand(restored);
+    verify(player).sendMessage(contains("already holds an infusion"));
+    assertTrue(events.currentStations.isEmpty());
+    // A failed rebuild keeps the original gem and does not infuse it.
+    try (var valid = mockStatic(InfusedGemValidator.class);
+        var builder = mockStatic(InfusedGemBuilder.class)) {
+      valid.when(() -> InfusedGemValidator.isReset(hand)).thenReturn(true);
+      events.addGemEvent(event(Action.RIGHT_CLICK_BLOCK, EquipmentSlot.HAND));
+    }
+    verify(inventory, times(1)).setItemInMainHand(any());
+    verify(player, times(1)).sendMessage(contains("already holds an infusion"));
+    assertTrue(events.currentStations.isEmpty());
+    verify(hand, never()).setAmount(anyInt());
   }
 
   @Test

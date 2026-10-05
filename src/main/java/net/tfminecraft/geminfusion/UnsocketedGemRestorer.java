@@ -9,20 +9,18 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 import io.lumine.mythic.lib.api.item.NBTItem;
-import net.Indyuce.mmoitems.ItemStats;
+import net.tfminecraft.geminfusion.goldsmith.InfusedGemValidator;
 
 public final class UnsocketedGemRestorer {
 	private UnsocketedGemRestorer() {
 	}
 
+	/** A null or unknown rarityId restores the gem without a rarity. */
 	public static void restore(Player player, String rarityId, Gemstone gem, Map<Integer, ItemStack> beforeInventory) {
-		if (player == null || rarityId == null || gem == null) {
+		if (player == null || gem == null) {
 			return;
 		}
 		GemRarity rarity = ConfigLoader.findRarityById(rarityId);
-		if (rarity == null) {
-			return;
-		}
 
 		Integer slot = findTargetSlot(player, gem, beforeInventory);
 		if (slot == null) {
@@ -30,8 +28,10 @@ public final class UnsocketedGemRestorer {
 		}
 
 		PlayerInventory inventory = player.getInventory();
-		ItemStack item = inventory.getItem(slot);
-		inventory.setItem(slot, InfusedGemBuilder.applyCosmeticsToItem(item, gem, rarity));
+		ItemStack restored = InfusedGemBuilder.applyCosmeticsToItem(inventory.getItem(slot), gem, rarity);
+		if (restored != null) {
+			inventory.setItem(slot, restored);
+		}
 	}
 
 	private static Integer findTargetSlot(Player player, Gemstone gem, Map<Integer, ItemStack> beforeInventory) {
@@ -86,13 +86,6 @@ public final class UnsocketedGemRestorer {
 	}
 
 	private static boolean needsRestore(ItemStack item) {
-		NBTItem nbt = NBTItem.get(item);
-		if (nbt.hasTag(ItemStats.DISPLAYED_TYPE.getNBTPath())) {
-			String displayed = nbt.getString(ItemStats.DISPLAYED_TYPE.getNBTPath());
-			if (displayed != null && !displayed.isBlank() && !displayed.equalsIgnoreCase("Blank Gemstone")) {
-				return false;
-			}
-		}
-		return true;
+		return InfusedGemValidator.isReset(item);
 	}
 }

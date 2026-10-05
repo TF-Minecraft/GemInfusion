@@ -75,15 +75,14 @@ public class GemSocketRebuildListener implements Listener {
 			}
 			SocketRarityStore.remove(fixed, removedUuid);
 
-			if (rarityId != null) {
-				Gemstone gem = findGemFromSocketed(oldItem, removedUuid);
-				if (gem != null) {
-					String capturedRarity = rarityId;
-					Gemstone capturedGem = gem;
-					var beforeInventory = UnsocketInventorySnapshot.poll(player);
-					Bukkit.getScheduler().runTask(InfusionMain.plugin, () -> UnsocketedGemRestorer.restore(player,
-							capturedRarity, capturedGem, beforeInventory));
-				}
+			// Gems socketed before rarities were stored have none; restore them without one.
+			Gemstone gem = findGemFromSocketed(oldItem, removedUuid);
+			if (gem != null) {
+				String capturedRarity = rarityId;
+				Gemstone capturedGem = gem;
+				var beforeInventory = UnsocketInventorySnapshot.poll(player);
+				Bukkit.getScheduler().runTask(InfusionMain.plugin, () -> UnsocketedGemRestorer.restore(player,
+						capturedRarity, capturedGem, beforeInventory));
 			}
 		}
 
