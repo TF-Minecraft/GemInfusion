@@ -372,11 +372,21 @@ public class GoldsmithStationManager implements Listener {
 			IntCounter c = e.getValue();
 			p.sendMessage(GoldsmithMaterialTypeLoader.display(e.getKey()) + "§7: §e" + c.getCurrent() + "/" + c.getNeeded());
 		}
+		for (Map.Entry<GoldsmithMaterial, Integer> e : station.getDepositedByMaterial().entrySet()) {
+			p.sendMessage("§7- " + e.getKey().getName() + " §ex" + e.getValue());
+		}
 		if (station.getProject().requiresGem()) {
 			p.sendMessage("§7gem: §e" + (station.hasGem() ? "1/1" : "0/1"));
 		}
 		p.sendMessage("§7Recipe: §e" + Math.round(station.getRecipePercent()) + "%");
-		p.sendMessage("§7Hits: §e" + station.getTotalHitCount());
+		// Counted by id: a reload replaces the hit objects this bench was keyed with.
+		Map<String, Integer> done = new HashMap<>();
+		for (Map.Entry<GoldsmithHit, IntCounter> e : station.getHits().entrySet()) {
+			done.merge(e.getKey().getId(), e.getValue().getCurrent(), Integer::sum);
+		}
+		for (GoldsmithHit hit : GoldsmithHitLoader.get().values()) {
+			p.sendMessage(hit.getName() + "§7: §e" + done.getOrDefault(hit.getId(), 0));
+		}
 		p.sendMessage("§7Left-click branding to finish");
 		p.sendMessage("§cSHIFT + LEFT CLICK with the branding tool to cancel the project!");
 	}
