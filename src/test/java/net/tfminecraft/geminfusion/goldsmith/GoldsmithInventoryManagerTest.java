@@ -88,6 +88,7 @@ class GoldsmithInventoryManagerTest {
     assertEquals("Fancy ring", icon.getItemMeta().getDisplayName());
     assertTrue(icon.getItemMeta().getLore().contains("§7Tier: §eMajor"));
     assertTrue(icon.getItemMeta().getLore().contains("§7Requires §a1 §7infused gem"));
+    assertFalse(icon.getItemMeta().getLore().contains("§7Needs the exact gold mix"));
     assertEquals(
         "ring",
         icon.getItemMeta()
@@ -97,6 +98,7 @@ class GoldsmithInventoryManagerTest {
     assertTrue(inv.getItem(2).getItemMeta().getLore().contains("§7Tier: §eGreater"));
     assertTrue(
         inv.getItem(3).getItemMeta().getLore().stream().noneMatch(l -> l.startsWith("§7Tier")));
+    assertTrue(inv.getItem(3).getItemMeta().getLore().contains("§7Needs the exact gold mix"));
     for (int slot = 4; slot < 27; slot++)
       assertEquals(Material.GRAY_STAINED_GLASS_PANE, inv.getItem(slot).getType());
   }
