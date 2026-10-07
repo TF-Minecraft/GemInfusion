@@ -8,6 +8,7 @@ public enum GoldsmithFeedback {
 	LACKING_ITEMS,
 	LACKING_HITS,
 	RECIPE_MISMATCH,
+	HITS_MISMATCH,
 	NO_PROJECT,
 	NOT_INFUSED
 }

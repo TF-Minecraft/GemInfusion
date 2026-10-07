@@ -141,7 +141,7 @@ class GoldsmithStationTest {
     assertEquals(GoldsmithFeedback.SUCCESS, station.hit(hit));
     assertEquals(50, station.getHitPercent());
     assertEquals(50, station.getFinishedTotal());
-    assertEquals(GoldsmithFeedback.SUCCESS, station.canFinish());
+    assertEquals(GoldsmithFeedback.HITS_MISMATCH, station.canFinish());
     station.hit(hit);
     assertEquals(100, station.getHitPercent());
     station.hit(hit);
@@ -233,7 +233,7 @@ class GoldsmithStationTest {
   }
 
   @Test
-  void gemFreeProjectsOnlyFinishWithAPerfectRecipe() {
+  void gemFreeProjectsOnlyFinishWithAPerfectRecipeAndHits() {
     GoldsmithMaterial shiny = mock(GoldsmithMaterial.class);
     when(shiny.getType()).thenReturn("gold");
     when(shiny.getHits()).thenReturn(Map.of(hit, 2));
@@ -257,8 +257,19 @@ class GoldsmithStationTest {
     station.addMaterial(material, null);
     station.addMaterial(shiny, null);
     assertEquals(GoldsmithFeedback.LACKING_HITS, station.canFinish());
-    for (int i = 0; i < 4; i++) station.hit(hit);
+    for (int i = 0; i < 3; i++) station.hit(hit);
+    assertEquals(75, station.getHitPercent());
+    assertEquals(GoldsmithFeedback.HITS_MISMATCH, station.canFinish());
+    station.hit(hit);
     assertEquals(100, station.getRecipePercent());
     assertEquals(GoldsmithFeedback.SUCCESS, station.canFinish());
+    station.hit(hit);
+    assertEquals(GoldsmithFeedback.HITS_MISMATCH, station.canFinish());
+    when(project.requiresGem()).thenReturn(true);
+    try (var validator = mockStatic(InfusedGemValidator.class)) {
+      validator.when(() -> InfusedGemValidator.isInfused(any())).thenReturn(true);
+      station.addGem(stack());
+      assertEquals(GoldsmithFeedback.SUCCESS, station.canFinish());
+    }
   }
 }

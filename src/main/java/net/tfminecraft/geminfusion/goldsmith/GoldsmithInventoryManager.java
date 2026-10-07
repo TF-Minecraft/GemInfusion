@@ -58,7 +58,7 @@ public class GoldsmithInventoryManager {
 		if (project.requiresGem()) {
 			lore.add("§7Requires §a1 §7infused gem");
 		} else {
-			lore.add("§7Needs the exact gold mix");
+			lore.add("§7Needs the exact gold mix and hits");
 		}
 		meta.setLore(lore);
 		meta.getPersistentDataContainer().set(projectKey(), PersistentDataType.STRING, project.getId());
