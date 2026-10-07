@@ -335,6 +335,11 @@ public class GoldsmithStationManager implements Listener {
 				p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
 				return;
 			}
+			if (finish == GoldsmithFeedback.HITS_MISMATCH) {
+				p.sendMessage("§cThis piece only comes out right with exactly the hits it needs. Keep working it, or cancel it if you went too far.");
+				p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+				return;
+			}
 			if (finish == GoldsmithFeedback.NOT_INFUSED) {
 				p.sendMessage("§cYou need an infused gem for jewelry.");
 				p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);

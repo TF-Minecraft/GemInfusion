@@ -351,6 +351,7 @@ class GoldsmithStationManagerTest {
             GoldsmithFeedback.LACKING_ITEMS,
             GoldsmithFeedback.LACKING_HITS,
             GoldsmithFeedback.RECIPE_MISMATCH,
+            GoldsmithFeedback.HITS_MISMATCH,
             GoldsmithFeedback.NOT_INFUSED)) {
       reset();
       when(station.canFinish()).thenReturn(feedback);
@@ -361,6 +362,9 @@ class GoldsmithStationManagerTest {
     verify(player)
         .sendMessage(
             "§cThis piece only comes out right with the exact gold mix. Cancel it and try another mix.");
+    verify(player)
+        .sendMessage(
+            "§cThis piece only comes out right with exactly the hits it needs. Keep working it, or cancel it if you went too far.");
     reset();
     when(project.requiresGem()).thenReturn(true);
     when(station.canFinish()).thenReturn(GoldsmithFeedback.LACKING_ITEMS);
