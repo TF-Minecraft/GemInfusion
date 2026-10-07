@@ -167,6 +167,16 @@ class GoldsmithStationTest {
     assertEquals(GoldsmithFeedback.SUCCESS, station.hit(other));
     assertEquals(1, station.getTotalHitCount());
     assertEquals(0, station.getHitPercent());
+    station.hit(hit);
+    station.hit(hit);
+    assertEquals(100, station.getHitPercent());
+    assertEquals(GoldsmithFeedback.HITS_MISMATCH, station.canFinish());
+    when(project.requiresGem()).thenReturn(true);
+    try (var validator = mockStatic(InfusedGemValidator.class)) {
+      validator.when(() -> InfusedGemValidator.isInfused(any())).thenReturn(true);
+      station.addGem(stack());
+      assertEquals(GoldsmithFeedback.SUCCESS, station.canFinish());
+    }
   }
 
   @Test
