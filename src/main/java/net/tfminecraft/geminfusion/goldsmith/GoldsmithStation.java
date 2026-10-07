@@ -248,6 +248,8 @@ public class GoldsmithStation {
 			return GoldsmithFeedback.NOT_INFUSED;
 		}
 		if (!checkItems()) return GoldsmithFeedback.LACKING_ITEMS;
+		// Gem-free pieces have no quality to lose, so only a perfect recipe makes one.
+		if (!project.requiresGem() && getRecipePercent() < 100) return GoldsmithFeedback.RECIPE_MISMATCH;
 		if (!GoldsmithMath.meetsMinHitPercent(getHitPercent())) return GoldsmithFeedback.LACKING_HITS;
 		return GoldsmithFeedback.SUCCESS;
 	}
