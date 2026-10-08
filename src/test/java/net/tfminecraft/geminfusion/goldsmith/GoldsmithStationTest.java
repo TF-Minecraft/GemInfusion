@@ -141,7 +141,7 @@ class GoldsmithStationTest {
     assertEquals(GoldsmithFeedback.SUCCESS, station.hit(hit));
     assertEquals(50, station.getHitPercent());
     assertEquals(50, station.getFinishedTotal());
-    assertEquals(GoldsmithFeedback.HITS_MISMATCH, station.canFinish());
+    assertEquals(GoldsmithFeedback.RUINED, station.canFinish());
     station.hit(hit);
     assertEquals(100, station.getHitPercent());
     station.hit(hit);
@@ -170,7 +170,7 @@ class GoldsmithStationTest {
     station.hit(hit);
     station.hit(hit);
     assertEquals(100, station.getHitPercent());
-    assertEquals(GoldsmithFeedback.HITS_MISMATCH, station.canFinish());
+    assertEquals(GoldsmithFeedback.RUINED, station.canFinish());
     when(project.requiresGem()).thenReturn(true);
     try (var validator = mockStatic(InfusedGemValidator.class)) {
       validator.when(() -> InfusedGemValidator.isInfused(any())).thenReturn(true);
@@ -243,7 +243,7 @@ class GoldsmithStationTest {
   }
 
   @Test
-  void gemFreeProjectsOnlyFinishWithAPerfectRecipeAndHits() {
+  void gemFreeProjectsAreRuinedWithoutAPerfectRecipeAndHits() {
     GoldsmithMaterial shiny = mock(GoldsmithMaterial.class);
     when(shiny.getType()).thenReturn("gold");
     when(shiny.getHits()).thenReturn(Map.of(hit, 2));
@@ -252,9 +252,11 @@ class GoldsmithStationTest {
     station.setProject(project);
     station.addMaterial(material, null);
     station.addMaterial(material, null);
+    // A wrong mix must not show before the work is done, or finishing becomes a free recipe check.
+    assertEquals(GoldsmithFeedback.LACKING_HITS, station.canFinish());
     for (int i = 0; i < 4; i++) station.hit(hit);
     assertEquals(50, station.getRecipePercent());
-    assertEquals(GoldsmithFeedback.RECIPE_MISMATCH, station.canFinish());
+    assertEquals(GoldsmithFeedback.RUINED, station.canFinish());
     when(project.requiresGem()).thenReturn(true);
     try (var validator = mockStatic(InfusedGemValidator.class)) {
       validator.when(() -> InfusedGemValidator.isInfused(any())).thenReturn(true);
@@ -269,12 +271,12 @@ class GoldsmithStationTest {
     assertEquals(GoldsmithFeedback.LACKING_HITS, station.canFinish());
     for (int i = 0; i < 3; i++) station.hit(hit);
     assertEquals(75, station.getHitPercent());
-    assertEquals(GoldsmithFeedback.HITS_MISMATCH, station.canFinish());
+    assertEquals(GoldsmithFeedback.RUINED, station.canFinish());
     station.hit(hit);
     assertEquals(100, station.getRecipePercent());
     assertEquals(GoldsmithFeedback.SUCCESS, station.canFinish());
     station.hit(hit);
-    assertEquals(GoldsmithFeedback.HITS_MISMATCH, station.canFinish());
+    assertEquals(GoldsmithFeedback.RUINED, station.canFinish());
     when(project.requiresGem()).thenReturn(true);
     try (var validator = mockStatic(InfusedGemValidator.class)) {
       validator.when(() -> InfusedGemValidator.isInfused(any())).thenReturn(true);

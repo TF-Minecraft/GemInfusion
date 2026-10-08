@@ -248,12 +248,12 @@ public class GoldsmithStation {
 			return GoldsmithFeedback.NOT_INFUSED;
 		}
 		if (!checkItems()) return GoldsmithFeedback.LACKING_ITEMS;
-		// Gem-free pieces have no quality to lose, so only a perfect recipe and hits make one.
-		if (!project.requiresGem() && getRecipePercent() < 100) return GoldsmithFeedback.RECIPE_MISMATCH;
 		if (!GoldsmithMath.meetsMinHitPercent(getHitPercent())) return GoldsmithFeedback.LACKING_HITS;
+		// Gem-free pieces have no quality to lose, so anything short of a perfect recipe and hits ruins them.
 		// Hits with tools the piece does not need are only in the total, so compare it too.
-		if (!project.requiresGem() && (getHitPercent() < 100 || getTotalHitCount() != getTotalHitNeeded())) {
-			return GoldsmithFeedback.HITS_MISMATCH;
+		if (!project.requiresGem()
+				&& (getRecipePercent() < 100 || getHitPercent() < 100 || getTotalHitCount() != getTotalHitNeeded())) {
+			return GoldsmithFeedback.RUINED;
 		}
 		return GoldsmithFeedback.SUCCESS;
 	}
