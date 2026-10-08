@@ -10,8 +10,9 @@ GemInfusion gives gemstones rolled bonuses and turns them into a resource for eq
 - **Rarity and stat rolls** — gems range from common to legendary and provide bonuses such as health, armour, damage, or damage reduction according to their type.
 - **Character influence** — Intelligence affects an infused gem's rolled stat, while Dexterity separately influences the bonus carried into jewellery.
 - **Socketed equipment** — connects gems with MMOItems sockets and preserves rarity information through socketing and removal.
-- **Goldsmithing projects** — craft rings, necklaces, medals, and other pieces from metal materials and an infused gem at a smithing station. Each finished piece records the metal materials actually used, so recycling can return those rather than the listed recipe. Projects set to `gem: 0`, such as the Golden Key, need only gold and give the item without a stat or quality. Finishing one below the minimum hit percent only asks for more work. Past that, finishing ruins it and loses the gold unless the recipe is exact and every hit matches what the piece needs, with no missing, extra or unneeded-tool hits. The branding tool's status never shows the recipe or hit percents; players see them only once a piece is finished or ruined.
+- **Goldsmithing projects** — craft rings, necklaces, medals, and other pieces from metals and infused gems, or make gem-free items such as the Golden Key.
 - **Craftsmanship matters** — recipe accuracy, tool work, project tier, and finishing quality shape how much of the gem's bonus reaches the finished piece.
+- **Material recovery** — finished pieces record the metals actually used for compatible recycling.
 
 The same gemstone links discovery and craft: its infusion determines the starting bonus, and the goldsmith's work shapes the jewellery made from it. Legendary infusions can also be announced to other players.
 
@@ -21,13 +22,17 @@ The same gemstone links discovery and craft: its infusion determines the startin
 
 Technical documentation is maintained in [TF-Minecraft/Docs](https://github.com/TF-Minecraft/Docs).
 
+[Goldsmithing and finishing rules](https://github.com/TF-Minecraft/Docs/blob/main/projects/GemInfusion/goldsmithing.md)
+
 ## Tests
 
 With Java 21 and the pinned plugin dependencies installed, run `mvn clean verify`.
-Tests use JUnit, Mockito, and MockBukkit; JaCoCo reports are written to
-`target/site/jacoco/index.html` and uploaded by CI. Tests run locally without a live
-Minecraft server. Verification requires 100% line, branch, and instruction
+Tests use JUnit 5, Mockito, and MockBukkit. Surefire test results are in
+`target/surefire-reports/`; JaCoCo HTML and XML reports are in `target/site/jacoco/`.
+CI uploads both. Verification requires 100% line, branch, and instruction
 coverage of production code, with no coverage exclusions.
+Live station interactions, client effects, and the installed MMOItems/MMOCore
+integrations require separate in-game checks.
 
 ## License
 
