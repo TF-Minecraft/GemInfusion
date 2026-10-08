@@ -330,14 +330,8 @@ public class GoldsmithStationManager implements Listener {
 				p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
 				return;
 			}
-			if (finish == GoldsmithFeedback.RECIPE_MISMATCH) {
-				p.sendMessage("§cThis piece only comes out right with the exact gold mix. Cancel it and try another mix.");
-				p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-				return;
-			}
-			if (finish == GoldsmithFeedback.HITS_MISMATCH) {
-				p.sendMessage("§cThis piece only comes out right with exactly the hits it needs. Keep working it, or cancel it if you went too far.");
-				p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
+			if (finish == GoldsmithFeedback.RUINED) {
+				ruinCraft(p, station);
 				return;
 			}
 			if (finish == GoldsmithFeedback.NOT_INFUSED) {
@@ -382,21 +376,10 @@ public class GoldsmithStationManager implements Listener {
 			IntCounter c = e.getValue();
 			p.sendMessage(GoldsmithMaterialTypeLoader.display(e.getKey()) + "§7: §e" + c.getCurrent() + "/" + c.getNeeded());
 		}
-		for (Map.Entry<GoldsmithMaterial, Integer> e : station.getDepositedByMaterial().entrySet()) {
-			p.sendMessage("§7- " + e.getKey().getName() + " §ex" + e.getValue());
-		}
 		if (station.getProject().requiresGem()) {
 			p.sendMessage("§7gem: §e" + (station.hasGem() ? "1/1" : "0/1"));
 		}
-		p.sendMessage("§7Recipe: §e" + Math.round(station.getRecipePercent()) + "%");
-		// Counted by id: a reload replaces the hit objects this bench was keyed with.
-		Map<String, Integer> done = new HashMap<>();
-		for (Map.Entry<GoldsmithHit, IntCounter> e : station.getHits().entrySet()) {
-			done.merge(e.getKey().getId(), e.getValue().getCurrent(), Integer::sum);
-		}
-		for (GoldsmithHit hit : GoldsmithHitLoader.get().values()) {
-			p.sendMessage(hit.getName() + "§7: §e" + done.getOrDefault(hit.getId(), 0));
-		}
+		// Players have to find the mix and hits themselves, so only the finished piece shows its percents.
 		p.sendMessage("§7Left-click branding to finish");
 		p.sendMessage("§cSHIFT + LEFT CLICK with the branding tool to cancel the project!");
 	}
@@ -424,6 +407,25 @@ public class GoldsmithStationManager implements Listener {
 		if (station.getProject().requiresGem()) {
 			p.sendMessage("§7Stat carry: §e" + Math.round(result.getStatCarryPercent()) + "%");
 		}
+		station.cancel();
+		remove(station.getLoc());
+	}
+
+	/** A gem-free piece short of a perfect mix or hits is ruined: the gold is lost and only its percents are shown. */
+	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
+	@SuppressWarnings("deprecation")
+	private void ruinCraft(Player p, GoldsmithStation station) {
+		double recipe = station.getRecipePercent();
+		double hits = station.getHitPercent();
+		int needed = station.getTotalHitNeeded();
+		int total = station.getTotalHitCount();
+		// Hits with tools the piece does not need leave the percent at 100, so count them against it.
+		if (total > needed) hits = Math.min(hits, Math.floor(100.0 * needed / total));
+		p.sendTitle("§cThe piece was ruined", "§7" + station.getProject().getName() + " §7needs the exact gold mix and hits", 5, 40, 10);
+		p.sendMessage("§7Recipe: §e" + Math.round(recipe) + "%");
+		p.sendMessage("§7Hits: §e" + Math.round(hits) + "%");
+		p.sendMessage("§7Total: §e" + Math.round(Math.min(recipe, hits)) + "%");
+		p.getWorld().playSound(station.getLoc(), Sound.ENTITY_ITEM_BREAK, 1f, 0.8f);
 		station.cancel();
 		remove(station.getLoc());
 	}

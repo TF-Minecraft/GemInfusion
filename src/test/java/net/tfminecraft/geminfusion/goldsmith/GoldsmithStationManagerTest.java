@@ -212,7 +212,7 @@ class GoldsmithStationManagerTest {
   }
 
   @Test
-  void brandingShowsRecipeMaterialsGemAndHitStatus() {
+  void brandingShowsOnlyGoldAndGemProgressWithoutSpoilers() {
     manager.put(station);
     branding(true);
     when(project.requiresGem()).thenReturn(true);
@@ -221,30 +221,15 @@ class GoldsmithStationManagerTest {
     counter.setNeeded(2);
     counter.setCurrent(1);
     when(station.getTypes()).thenReturn(Map.of("gold", counter));
-    GoldsmithMaterial moldable = mock(GoldsmithMaterial.class);
-    when(moldable.getName()).thenReturn("Moldable Gold");
-    when(station.getDepositedByMaterial()).thenReturn(Map.of(moldable, 2));
-    GoldsmithHit hit = mock(GoldsmithHit.class);
-    when(hit.getId()).thenReturn("hit");
-    when(hit.getName()).thenReturn("§7Hit");
-    GoldsmithHit tinker = mock(GoldsmithHit.class);
-    when(tinker.getId()).thenReturn("tinker");
-    when(tinker.getName()).thenReturn("§7Tinker");
-    // A reload swaps in new hit objects; the bench's counts must still match by id.
-    GoldsmithHit staleHit = mock(GoldsmithHit.class);
-    when(staleHit.getId()).thenReturn("hit");
-    IntCounter swings = new IntCounter();
-    swings.setCurrent(16);
-    when(station.getHits()).thenReturn(Map.of(staleHit, swings));
-    LinkedHashMap<String, GoldsmithHit> configured = new LinkedHashMap<>();
-    configured.put("hit", hit);
-    configured.put("tinker", tinker);
-    hits.when(GoldsmithHitLoader::get).thenReturn(configured);
     manager.onInteract(click(Action.RIGHT_CLICK_BLOCK));
-    verify(player).sendMessage("§7- Moldable Gold §ex2");
-    verify(player).sendMessage("§7Hit§7: §e16");
-    verify(player).sendMessage("§7Tinker§7: §e0");
     verify(player).sendMessage("§7gem: §e1/1");
+    // Recipe and hit progress are for the player to work out; status must not reveal them.
+    verify(station, never()).getRecipePercent();
+    verify(station, never()).getHitPercent();
+    verify(station, never()).getHits();
+    verify(station, never()).getDepositedByMaterial();
+    verify(player, never()).sendMessage(contains("Recipe"));
+    verify(player, never()).sendMessage(contains("Hit"));
     reset();
     when(station.hasGem()).thenReturn(false);
     manager.onInteract(click(Action.RIGHT_CLICK_BLOCK));
@@ -344,14 +329,39 @@ class GoldsmithStationManagerTest {
   }
 
   @Test
+  void ruinedGemFreePiecesLoseTheGoldAndShowOnlyTheirPercents() {
+    branding(true);
+    when(station.canFinish()).thenReturn(GoldsmithFeedback.RUINED);
+    when(station.getRecipePercent()).thenReturn(50.0);
+    when(station.getHitPercent()).thenReturn(75.0);
+    when(station.getTotalHitNeeded()).thenReturn(4);
+    when(station.getTotalHitCount()).thenReturn(3);
+    reset();
+    manager.onInteract(click(Action.LEFT_CLICK_BLOCK));
+    assertNull(manager.get(loc));
+    verify(station).cancel();
+    verify(inventory, never()).addItem(any(ItemStack.class));
+    verify(player).sendTitle(eq("§cThe piece was ruined"), contains("Ring"), eq(5), eq(40), eq(10));
+    verify(player).sendMessage("§7Recipe: §e50%");
+    verify(player).sendMessage("§7Hits: §e75%");
+    verify(player).sendMessage("§7Total: §e50%");
+    // Hits with unneeded tools leave the hit percent at 100, but still show as short of it.
+    when(station.getRecipePercent()).thenReturn(100.0);
+    when(station.getHitPercent()).thenReturn(100.0);
+    when(station.getTotalHitCount()).thenReturn(5);
+    reset();
+    manager.onInteract(click(Action.LEFT_CLICK_BLOCK));
+    verify(player).sendMessage("§7Hits: §e80%");
+    verify(player).sendMessage("§7Total: §e80%");
+  }
+
+  @Test
   void finishingReportsMissingRequirementsAndFailedOutputWithoutClearingStation() {
     branding(true);
     for (GoldsmithFeedback feedback :
         List.of(
             GoldsmithFeedback.LACKING_ITEMS,
             GoldsmithFeedback.LACKING_HITS,
-            GoldsmithFeedback.RECIPE_MISMATCH,
-            GoldsmithFeedback.HITS_MISMATCH,
             GoldsmithFeedback.NOT_INFUSED)) {
       reset();
       when(station.canFinish()).thenReturn(feedback);
@@ -359,12 +369,6 @@ class GoldsmithStationManagerTest {
       assertSame(station, manager.get(loc));
     }
     verify(player).sendMessage("§cYou have to add all the gold before finishing");
-    verify(player)
-        .sendMessage(
-            "§cThis piece only comes out right with the exact gold mix. Cancel it and try another mix.");
-    verify(player)
-        .sendMessage(
-            "§cThis piece only comes out right with exactly the hits it needs. Keep working it, or cancel it if you went too far.");
     reset();
     when(project.requiresGem()).thenReturn(true);
     when(station.canFinish()).thenReturn(GoldsmithFeedback.LACKING_ITEMS);
