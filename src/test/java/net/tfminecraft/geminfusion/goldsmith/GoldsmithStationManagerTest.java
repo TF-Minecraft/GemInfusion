@@ -212,7 +212,7 @@ class GoldsmithStationManagerTest {
   }
 
   @Test
-  void brandingShowsOnlyGoldAndGemProgressWithoutSpoilers() {
+  void brandingShowsGoldGemAndHitsDoneWithoutSpoilers() {
     manager.put(station);
     branding(true);
     when(project.requiresGem()).thenReturn(true);
@@ -223,14 +223,15 @@ class GoldsmithStationManagerTest {
     when(station.getTypes()).thenReturn(Map.of("gold", counter));
     manager.onInteract(click(Action.RIGHT_CLICK_BLOCK));
     verify(player).sendMessage("§bGem§7: §e1/1");
-    verify(player).sendMessage("§7SHIFT + RIGHT CLICK with the branding tool to see the hits done");
-    // Recipe and hit progress are for the player to work out; status must not reveal them.
+    verify(player).sendMessage("§7Hits done:");
+    verify(player).sendMessage("§7Total: §e0");
+    // The mix and needed hits are for the player to work out; status must not reveal them.
     verify(station, never()).getRecipePercent();
     verify(station, never()).getHitPercent();
-    verify(station, never()).getHits();
+    verify(station, never()).getTotalHitNeeded();
     verify(station, never()).getDepositedByMaterial();
     verify(player, never()).sendMessage(contains("Recipe"));
-    verify(player, never()).sendMessage(contains("Hit"));
+    verify(player, never()).sendMessage(contains("SHIFT + RIGHT"));
     reset();
     when(station.hasGem()).thenReturn(false);
     manager.onInteract(click(Action.RIGHT_CLICK_BLOCK));
@@ -242,10 +243,13 @@ class GoldsmithStationManagerTest {
   }
 
   @Test
-  void sneakBrandingListsHitsDoneForEveryToolWithoutNeededCounts() {
+  void brandingListsHitsDoneForEveryToolWithoutNeededCountsSneakingOrNot() {
     manager.put(station);
     branding(true);
-    when(player.isSneaking()).thenReturn(true);
+    IntCounter gold = new IntCounter();
+    gold.setNeeded(4);
+    gold.setCurrent(4);
+    when(station.getTypes()).thenReturn(Map.of("gold", gold));
     GoldsmithHit hammer = mock(GoldsmithHit.class), small = mock(GoldsmithHit.class);
     GoldsmithHit tinker = mock(GoldsmithHit.class), stale = mock(GoldsmithHit.class);
     when(hammer.getId()).thenReturn("hit");
@@ -272,14 +276,27 @@ class GoldsmithStationManagerTest {
     done.put(stale, one);
     when(station.getHits()).thenReturn(done);
     when(station.getTotalHitCount()).thenReturn(6);
-    manager.onInteract(click(Action.RIGHT_CLICK_BLOCK));
-    verify(player).sendMessage("§7Hits done on Ring§7:");
-    verify(player).sendMessage("§7Hit§7: §e4");
-    verify(player).sendMessage("§7Small Hit§7: §e2");
-    verify(player).sendMessage("§7Tinker§7: §e0");
-    verify(player).sendMessage("§7Total: §e6");
-    verify(player, never()).sendMessage(contains("/"));
-    verify(player, never()).sendMessage(contains("Project"));
+    List<String> expected =
+        List.of(
+            "§7Project: Ring",
+            "Gold Materials§7: §e4/4",
+            "§7Hits done:",
+            "§7Hit§7: §e4",
+            "§7Small Hit§7: §e2",
+            "§7Tinker§7: §e0",
+            "§7Total: §e6",
+            "§7Left-click branding to finish",
+            "§cSHIFT + LEFT CLICK with the branding tool to cancel the project!");
+    // Sneaking or not, a mid-project branding right-click shows the same progress.
+    for (boolean sneaking : List.of(false, true)) {
+      clearInvocations(player);
+      reset();
+      when(player.isSneaking()).thenReturn(sneaking);
+      manager.onInteract(click(Action.RIGHT_CLICK_BLOCK));
+      ArgumentCaptor<String> sent = ArgumentCaptor.forClass(String.class);
+      verify(player, atLeastOnce()).sendMessage(sent.capture());
+      assertEquals(expected, sent.getAllValues());
+    }
     verify(station, never()).getTotalHitNeeded();
     verify(station, never()).getHitPercent();
     verify(station, never()).getRecipePercent();

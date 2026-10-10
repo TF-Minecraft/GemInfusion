@@ -228,13 +228,10 @@ public class GoldsmithStationManager implements Listener {
 			return;
 		}
 
+		// Mid-project, right-click and sneak right-click with the branding tool both show the progress.
 		if (isBranding(hand)) {
 			markCooldown(p);
-			if (p.isSneaking()) {
-				sendHitsDone(p, existing);
-			} else {
-				sendStatus(p, existing);
-			}
+			sendStatus(p, existing);
 			return;
 		}
 
@@ -375,9 +372,9 @@ public class GoldsmithStationManager implements Listener {
 		if (station.getProject().requiresGem()) {
 			p.sendMessage("§bGem§7: §e" + (station.hasGem() ? "1/1" : "0/1"));
 		}
+		sendHitsDone(p, station);
 		// Players have to find the mix and hits themselves, so only the finished piece shows its percents.
 		p.sendMessage("§7Left-click branding to finish");
-		p.sendMessage("§7SHIFT + RIGHT CLICK with the branding tool to see the hits done");
 		p.sendMessage("§cSHIFT + LEFT CLICK with the branding tool to cancel the project!");
 	}
 
@@ -388,7 +385,7 @@ public class GoldsmithStationManager implements Listener {
 		for (Map.Entry<GoldsmithHit, IntCounter> e : station.getHits().entrySet()) {
 			done.merge(e.getKey().getId(), e.getValue().getCurrent(), Integer::sum);
 		}
-		p.sendMessage("§7Hits done on " + station.getProject().getName() + "§7:");
+		p.sendMessage("§7Hits done:");
 		for (GoldsmithHit hit : GoldsmithHitLoader.get().values()) {
 			p.sendMessage(hit.getName() + "§7: §e" + done.getOrDefault(hit.getId(), 0));
 		}
