@@ -101,6 +101,10 @@ class ConfigLoadersTest {
     assertEquals(type.getName(), GoldsmithMaterialTypeLoader.display(type.getId()));
     assertEquals(100, QualityLoader.resolveStatFactor(100));
     assertEquals(100, QualityLoader.resolveStatFactor(150));
+    // A perfect piece that misses a Masterwork drops to the tier below it.
+    assertSame(QualityLoader.getByString("epic"), QualityLoader.below(QualityLoader.getByString("legendary")));
+    assertNull(QualityLoader.below(QualityLoader.getByString("crude")));
+    assertNull(QualityLoader.below(null));
     for (Quality q : QualityLoader.get().values()) {
       assertEquals(q, QualityLoader.getByString(q.getId()));
       assertNotNull(q.getName());

@@ -455,8 +455,12 @@ class GoldsmithStationManagerTest {
         reset();
         // Gem-free projects (keys) have no quality and no stat carry line.
         when(project.requiresGem()).thenReturn(chosen != null);
+        // Gem pieces carry the goldsmith's craft roll; gem-free ones have none.
         JewelryCraftResult result =
-            new JewelryCraftResult(new ItemStack(Material.DIAMOND), 90, 80, 80, 60, chosen);
+            chosen == null
+                ? new JewelryCraftResult(new ItemStack(Material.DIAMOND), 90, 80, 80, 60, null)
+                : new JewelryCraftResult(
+                    new ItemStack(Material.DIAMOND), 90, 80, 80, 60, chosen, new D20Roll(17, 3));
         output.when(() -> JewelryOutput.build(station, player)).thenReturn(result);
         manager.onInteract(click(Action.LEFT_CLICK_BLOCK));
         assertNull(manager.get(loc));
@@ -465,6 +469,7 @@ class GoldsmithStationManagerTest {
       verify(station, times(2)).cancel();
       verify(player).sendMessage("§7Quality: Fine");
       verify(player).sendMessage("§7Stat carry: §e60%");
+      verify(player).sendMessage("§7Craft roll: §e17 §7(+3) = §e20");
     }
   }
 

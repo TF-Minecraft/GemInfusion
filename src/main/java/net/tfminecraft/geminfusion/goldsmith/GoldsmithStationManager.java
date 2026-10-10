@@ -409,6 +409,9 @@ public class GoldsmithStationManager implements Listener {
 		p.sendMessage("§7Recipe: §e" + Math.round(result.getRecipePercent()) + "%");
 		p.sendMessage("§7Hits: §e" + Math.round(result.getHitPercent()) + "%");
 		p.sendMessage("§7Total: §e" + Math.round(result.getFinishedTotal()) + "%");
+		if (result.getCraftRoll() != null) {
+			p.sendMessage("§7Craft roll: " + result.getCraftRoll().describe());
+		}
 		if (result.getQuality() != null) {
 			p.sendMessage("§7Quality: " + result.getQuality().getName());
 		}
