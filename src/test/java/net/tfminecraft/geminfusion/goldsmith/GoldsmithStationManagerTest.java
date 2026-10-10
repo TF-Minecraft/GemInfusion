@@ -222,7 +222,8 @@ class GoldsmithStationManagerTest {
     counter.setCurrent(1);
     when(station.getTypes()).thenReturn(Map.of("gold", counter));
     manager.onInteract(click(Action.RIGHT_CLICK_BLOCK));
-    verify(player).sendMessage("§7gem: §e1/1");
+    verify(player).sendMessage("§bGem§7: §e1/1");
+    verify(player).sendMessage("§7SHIFT + RIGHT CLICK with the branding tool to see the hits done");
     // Recipe and hit progress are for the player to work out; status must not reveal them.
     verify(station, never()).getRecipePercent();
     verify(station, never()).getHitPercent();
@@ -233,11 +234,55 @@ class GoldsmithStationManagerTest {
     reset();
     when(station.hasGem()).thenReturn(false);
     manager.onInteract(click(Action.RIGHT_CLICK_BLOCK));
-    verify(player).sendMessage("§7gem: §e0/1");
+    verify(player).sendMessage("§bGem§7: §e0/1");
     reset();
     when(project.requiresGem()).thenReturn(false);
     manager.onInteract(click(Action.RIGHT_CLICK_BLOCK));
     verify(player, times(3)).sendMessage("§7Project: Ring");
+  }
+
+  @Test
+  void sneakBrandingListsHitsDoneForEveryToolWithoutNeededCounts() {
+    manager.put(station);
+    branding(true);
+    when(player.isSneaking()).thenReturn(true);
+    GoldsmithHit hammer = mock(GoldsmithHit.class), small = mock(GoldsmithHit.class);
+    GoldsmithHit tinker = mock(GoldsmithHit.class), stale = mock(GoldsmithHit.class);
+    when(hammer.getId()).thenReturn("hit");
+    when(hammer.getName()).thenReturn("§7Hit");
+    when(small.getId()).thenReturn("small_hit");
+    when(small.getName()).thenReturn("§7Small Hit");
+    when(tinker.getId()).thenReturn("tinker");
+    when(tinker.getName()).thenReturn("§7Tinker");
+    // A hit object from before a reload still counts under its id.
+    when(stale.getId()).thenReturn("hit");
+    LinkedHashMap<String, GoldsmithHit> all = new LinkedHashMap<>();
+    all.put("hit", hammer);
+    all.put("small_hit", small);
+    all.put("tinker", tinker);
+    hits.when(GoldsmithHitLoader::get).thenReturn(all);
+    IntCounter three = new IntCounter(), two = new IntCounter(), one = new IntCounter();
+    three.setCurrent(3);
+    three.setNeeded(8);
+    two.setCurrent(2);
+    one.setCurrent(1);
+    Map<GoldsmithHit, IntCounter> done = new LinkedHashMap<>();
+    done.put(hammer, three);
+    done.put(small, two);
+    done.put(stale, one);
+    when(station.getHits()).thenReturn(done);
+    when(station.getTotalHitCount()).thenReturn(6);
+    manager.onInteract(click(Action.RIGHT_CLICK_BLOCK));
+    verify(player).sendMessage("§7Hits done on Ring§7:");
+    verify(player).sendMessage("§7Hit§7: §e4");
+    verify(player).sendMessage("§7Small Hit§7: §e2");
+    verify(player).sendMessage("§7Tinker§7: §e0");
+    verify(player).sendMessage("§7Total: §e6");
+    verify(player, never()).sendMessage(contains("/"));
+    verify(player, never()).sendMessage(contains("Project"));
+    verify(station, never()).getTotalHitNeeded();
+    verify(station, never()).getHitPercent();
+    verify(station, never()).getRecipePercent();
   }
 
   @Test

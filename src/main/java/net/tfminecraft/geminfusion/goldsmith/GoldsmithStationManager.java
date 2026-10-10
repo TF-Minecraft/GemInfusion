@@ -230,7 +230,11 @@ public class GoldsmithStationManager implements Listener {
 
 		if (isBranding(hand)) {
 			markCooldown(p);
-			sendStatus(p, existing);
+			if (p.isSneaking()) {
+				sendHitsDone(p, existing);
+			} else {
+				sendStatus(p, existing);
+			}
 			return;
 		}
 
@@ -369,11 +373,26 @@ public class GoldsmithStationManager implements Listener {
 			p.sendMessage(GoldsmithMaterialTypeLoader.display(e.getKey()) + "§7: §e" + c.getCurrent() + "/" + c.getNeeded());
 		}
 		if (station.getProject().requiresGem()) {
-			p.sendMessage("§7gem: §e" + (station.hasGem() ? "1/1" : "0/1"));
+			p.sendMessage("§bGem§7: §e" + (station.hasGem() ? "1/1" : "0/1"));
 		}
 		// Players have to find the mix and hits themselves, so only the finished piece shows its percents.
 		p.sendMessage("§7Left-click branding to finish");
+		p.sendMessage("§7SHIFT + RIGHT CLICK with the branding tool to see the hits done");
 		p.sendMessage("§cSHIFT + LEFT CLICK with the branding tool to cancel the project!");
+	}
+
+	/** Lists every goldsmith tool with the hits done so far. Needed counts stay hidden, so this spoils nothing. */
+	private void sendHitsDone(Player p, GoldsmithStation station) {
+		// By id, so counts survive a reload that rebuilds the hit objects.
+		Map<String, Integer> done = new HashMap<>();
+		for (Map.Entry<GoldsmithHit, IntCounter> e : station.getHits().entrySet()) {
+			done.merge(e.getKey().getId(), e.getValue().getCurrent(), Integer::sum);
+		}
+		p.sendMessage("§7Hits done on " + station.getProject().getName() + "§7:");
+		for (GoldsmithHit hit : GoldsmithHitLoader.get().values()) {
+			p.sendMessage(hit.getName() + "§7: §e" + done.getOrDefault(hit.getId(), 0));
+		}
+		p.sendMessage("§7Total: §e" + station.getTotalHitCount());
 	}
 
 	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
