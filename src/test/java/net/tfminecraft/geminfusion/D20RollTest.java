@@ -160,6 +160,20 @@ class D20RollTest {
       int natural = D20Roll.die.getAsInt();
       assertTrue(natural >= 1 && natural <= 20, String.valueOf(natural));
     }
+    // A spread of 100% or more would push the bottom to zero or below, so it is clamped with a warning.
+    D20Roll.load(config("infusion:\n  spread-percent: 150\n"));
+    assertEquals(99, D20Roll.spreadPercent);
+    InfusionMain previous = InfusionMain.plugin;
+    try {
+      InfusionMain.plugin = mock(InfusionMain.class);
+      var logger = mock(java.util.logging.Logger.class);
+      when(InfusionMain.plugin.getLogger()).thenReturn(logger);
+      D20Roll.load(config("infusion:\n  spread-percent: -5\n"));
+      assertEquals(0, D20Roll.spreadPercent);
+      verify(logger).warning(contains("spread-percent"));
+    } finally {
+      InfusionMain.plugin = previous;
+    }
     D20Roll.load(config("{}"));
     assertEquals(-5, D20Roll.modifier(0));
     int natural = D20Roll.die.getAsInt();

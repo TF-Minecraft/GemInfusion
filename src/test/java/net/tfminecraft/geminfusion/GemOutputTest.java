@@ -397,6 +397,7 @@ class GemOutputTest {
     Quality masterwork = mock(Quality.class), gleaming = mock(Quality.class);
     when(gleaming.getStatMax()).thenReturn(65.0);
     double[] gemValue = {3.6};
+    int dc = D20Roll.masterworkDc;
     try (var libs = mockStatic(TLibs.class);
         var valid = mockStatic(InfusedGemValidator.class);
         var qualityApi = mockStatic(QualityLoader.class);
@@ -431,7 +432,6 @@ class GemOutputTest {
       D20Roll.masterworkDc = 15;
       D20Roll.die = () -> 16;
       assertEquals(new Craft(masterwork, 100, 4.32), craft.get());
-      D20Roll.masterworkDc = 20;
       // Flawless gem, natural 1: Gleaming at its top carry, then -20%.
       D20Roll.die = () -> 1;
       assertEquals(new Craft(gleaming, 65, 1.872), craft.get());
@@ -453,6 +453,7 @@ class GemOutputTest {
       ConfigLoader.loadedGems.clear();
       assertEquals(new Craft(gleaming, 65, 2.808), craft.get());
     } finally {
+      D20Roll.masterworkDc = dc;
       GoldsmithCache.jewelryGemStatBoostChances = boostChances;
       ConfigLoader.loadedGems.add(gem);
     }

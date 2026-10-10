@@ -3,6 +3,7 @@ package net.tfminecraft.geminfusion;
 import java.util.TreeMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.IntSupplier;
+import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
@@ -158,7 +159,14 @@ public final class D20Roll {
 			forcedNatural = section.getInt("force-natural", 0);
 			infusionAttribute = section.getString("infusion.attribute", infusionAttribute);
 			flawlessDc = section.getInt("infusion.flawless-dc", flawlessDc);
-			spreadPercent = section.getDouble("infusion.spread-percent", spreadPercent);
+			double spread = section.getDouble("infusion.spread-percent", spreadPercent);
+			if (spread < 0 || spread >= 100) {
+				// 100 or more would put the bottom of the spread at zero or below.
+				double clamped = Math.max(0, Math.min(99, spread));
+				warn("d20.infusion.spread-percent must be at least 0 and under 100, got " + spread + "; using " + clamped);
+				spread = clamped;
+			}
+			spreadPercent = spread;
 			goldsmithAttribute = section.getString("goldsmithing.attribute", goldsmithAttribute);
 			masterworkDc = section.getInt("goldsmithing.masterwork-dc", masterworkDc);
 			percentPerPoint = section.getDouble("goldsmithing.percent-per-point", percentPerPoint);
@@ -178,6 +186,13 @@ public final class D20Roll {
 			table.put(value, Math.floorDiv(value - NEUTRAL_TOTAL, 2));
 		}
 		return table;
+	}
+
+	private static void warn(String message) {
+		Logger logger = InfusionMain.plugin == null
+				? Logger.getLogger("GemInfusion")
+				: InfusionMain.plugin.getLogger();
+		logger.warning(message);
 	}
 
 	private static double clamp(double value, double min, double max) {
