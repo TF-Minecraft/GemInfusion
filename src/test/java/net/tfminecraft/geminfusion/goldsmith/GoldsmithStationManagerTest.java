@@ -279,7 +279,8 @@ class GoldsmithStationManagerTest {
     List<String> expected =
         List.of(
             "§7Project: Ring",
-            "Gold Materials§7: §e4/4",
+            // Other tests may have loaded the gold type, so take its display name from the loader.
+            GoldsmithMaterialTypeLoader.display("gold") + "§7: §e4/4",
             "§7Hits done:",
             "§7Hit§7: §e4",
             "§7Small Hit§7: §e2",
