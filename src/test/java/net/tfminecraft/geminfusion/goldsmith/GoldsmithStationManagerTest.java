@@ -290,7 +290,7 @@ class GoldsmithStationManagerTest {
   }
 
   @Test
-  void toolHitsReportProgressWarningsAndFeedback() {
+  void toolHitsReportProgressAndFeedback() {
     GoldsmithHit hit = mock(GoldsmithHit.class);
     hits.when(() -> GoldsmithHitLoader.getByItem(hand)).thenReturn(hit);
     manager.onInteract(click(Action.LEFT_CLICK_BLOCK));
@@ -302,16 +302,16 @@ class GoldsmithStationManagerTest {
     for (GoldsmithFeedback feedback : GoldsmithFeedback.values()) {
       reset();
       when(station.hit(hit)).thenReturn(feedback);
-      when(station.markOverworkWarnedIfNeeded()).thenReturn(feedback == GoldsmithFeedback.SUCCESS);
       manager.onInteract(click(Action.LEFT_CLICK_BLOCK));
     }
     verify(player).sendMessage("§cYou have to add all the gold before working");
     reset();
     when(station.hit(hit)).thenReturn(GoldsmithFeedback.SUCCESS);
-    when(station.markOverworkWarnedIfNeeded()).thenReturn(false);
     manager.onInteract(click(Action.LEFT_CLICK_BLOCK));
     manager.onInteract(click(Action.LEFT_CLICK_BLOCK));
     verify(station, times(GoldsmithFeedback.values().length + 1)).hit(hit);
+    // Working a piece gives no advice beyond the hit count; only the finish shows percents.
+    verify(player, never()).sendMessage(contains("worked this piece"));
   }
 
   @Test
@@ -360,9 +360,7 @@ class GoldsmithStationManagerTest {
     branding(true);
     for (GoldsmithFeedback feedback :
         List.of(
-            GoldsmithFeedback.LACKING_ITEMS,
-            GoldsmithFeedback.LACKING_HITS,
-            GoldsmithFeedback.NOT_INFUSED)) {
+            GoldsmithFeedback.LACKING_ITEMS, GoldsmithFeedback.NOT_INFUSED)) {
       reset();
       when(station.canFinish()).thenReturn(feedback);
       manager.onInteract(click(Action.LEFT_CLICK_BLOCK));

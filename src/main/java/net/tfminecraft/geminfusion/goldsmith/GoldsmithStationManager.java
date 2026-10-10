@@ -325,11 +325,6 @@ public class GoldsmithStationManager implements Listener {
 				p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
 				return;
 			}
-			if (finish == GoldsmithFeedback.LACKING_HITS) {
-				p.sendMessage("§7Keep working this piece before finishing");
-				p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1f, 1f);
-				return;
-			}
 			if (finish == GoldsmithFeedback.RUINED) {
 				ruinCraft(p, station);
 				return;
@@ -352,9 +347,6 @@ public class GoldsmithStationManager implements Listener {
 				p.sendTitle("§7Hits §e" + station.getTotalHitCount(), "", 5, 20, 5);
 				playWorkFx(station.getLoc(), Material.GOLD_BLOCK);
 				p.getWorld().playSound(station.getLoc(), Sound.BLOCK_ANVIL_USE, 0.4f, 1f);
-				if (station.markOverworkWarnedIfNeeded()) {
-					p.sendMessage(GoldsmithCache.hitOvershootWarnMessage);
-				}
 				markDirty();
 				break;
 			case LACKING_ITEMS:
