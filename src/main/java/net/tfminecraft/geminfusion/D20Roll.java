@@ -29,7 +29,6 @@ public final class D20Roll {
 	public static int flawlessDc = 20;
 	public static double spreadPercent = 20;
 	public static String goldsmithAttribute = "dexterity";
-	public static int masterworkDc = 20;
 	public static double percentPerPoint = 2;
 	public static double maxPercent = 20;
 
@@ -66,10 +65,6 @@ public final class D20Roll {
 		return isFumble() ? natural : natural + modifier;
 	}
 
-	public boolean meets(int dc) {
-		return isCritical() || (!isFumble() && getTotal() >= dc);
-	}
-
 	/** Where the roll lands from the worst result (0) to the best (1); totals at or above the DC reach the best. */
 	public double position(int dc) {
 		if (isCritical()) return 1;
@@ -83,13 +78,6 @@ public final class D20Roll {
 		if (isCritical()) return maxPercent;
 		if (isFumble()) return -maxPercent;
 		return clamp((getTotal() - NEUTRAL_TOTAL) * percentPerPoint, -maxPercent, maxPercent);
-	}
-
-	/** How the roll reads in chat, e.g. "17 (+3) = 20". */
-	public String describe() {
-		if (isCritical()) return "§6Natural 20!";
-		if (isFumble()) return "§cNatural 1!";
-		return "§e" + natural + " §7(" + (modifier >= 0 ? "+" : "") + modifier + ") = §e" + getTotal();
 	}
 
 	public static int modifierFor(Player player, String attributeId) {
@@ -119,7 +107,7 @@ public final class D20Roll {
 		return round4(block.getMin() * (1 - spreadPercent / 100.0));
 	}
 
-	/** The highest stat a gem of this rarity can roll: its max, spreadPercent higher. Only a Flawless gem has it. */
+	/** The highest stat a gem of this rarity can roll: its max, spreadPercent higher. */
 	public static double spreadTop(GemStat block) {
 		return round4(block.getMax() * (1 + spreadPercent / 100.0));
 	}
@@ -129,10 +117,6 @@ public final class D20Roll {
 		return round4(bottom + (spreadTop(block) - bottom) * position);
 	}
 
-	public static boolean isTop(GemStat block, double value) {
-		return Math.abs(value - spreadTop(block)) < 0.00005;
-	}
-
 	public static void load(ConfigurationSection section) {
 		modifiers = defaultModifiers();
 		forcedNatural = 0;
@@ -140,7 +124,6 @@ public final class D20Roll {
 		flawlessDc = 20;
 		spreadPercent = 20;
 		goldsmithAttribute = "dexterity";
-		masterworkDc = 20;
 		percentPerPoint = 2;
 		maxPercent = 20;
 		if (section != null) {
@@ -168,7 +151,6 @@ public final class D20Roll {
 			}
 			spreadPercent = spread;
 			goldsmithAttribute = section.getString("goldsmithing.attribute", goldsmithAttribute);
-			masterworkDc = section.getInt("goldsmithing.masterwork-dc", masterworkDc);
 			percentPerPoint = section.getDouble("goldsmithing.percent-per-point", percentPerPoint);
 			maxPercent = section.getDouble("goldsmithing.max-percent", maxPercent);
 		}
