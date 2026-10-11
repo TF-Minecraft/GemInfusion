@@ -357,7 +357,6 @@ class GemOutputTest {
       assertEquals(80, result.getHitPercent());
       assertEquals(50, result.getStatCarryPercent());
       assertSame(quality, result.getQuality());
-      assertTrue(result.getCraftRoll().isCritical());
       assertEquals(0, original.getValue());
       verify(constructed.constructed().getLast())
           .setData(
@@ -371,7 +370,7 @@ class GemOutputTest {
   }
 
   @Test
-  void masterworkNeedsPerfectWorkAFlawlessGemAndACraftRollAtTheDc() throws Exception {
+  void perfectWorkIsAMasterworkWhateverTheGemOrCraftRoll() throws Exception {
     var boostChances = GoldsmithCache.jewelryGemStatBoostChances;
     GoldsmithCache.jewelryGemStatBoostChances = Map.of();
     GoldsmithStation station = mock(GoldsmithStation.class);
@@ -386,18 +385,12 @@ class GemOutputTest {
     when(station.getHitPercent()).thenReturn(100.0);
     when(project.getItem()).thenReturn("m.ring");
     when(project.getTierMultiplier()).thenReturn(1.0);
-    // Rare 2-3 spreads to 1.6-3.6, so only 3.6 is Flawless; epic and a different stat never match it.
-    gem.addStat(GemStat.parse("ruby", "legendary", config("stat: OTHER\nmin: 3\nmax: 3")));
-    gem.addStat(GemStat.parse("ruby", "epic", config("stat: ATTACK_DAMAGE\nmin: 3\nmax: 4")));
     gem.addStat(GemStat.parse("ruby", "rare", config("stat: ATTACK_DAMAGE\nmin: 2\nmax: 3")));
-    when(MMOItems.plugin.getStats().get("OTHER")).thenReturn(null);
     GemRarityPdc.write(gemItem, "rare");
     ItemAPI api = mock(ItemAPI.class, RETURNS_DEEP_STUBS);
     when(api.getCreator().getItemFromPath("m.ring")).thenReturn(base);
-    Quality masterwork = mock(Quality.class), gleaming = mock(Quality.class);
-    when(gleaming.getStatMax()).thenReturn(65.0);
+    Quality masterwork = mock(Quality.class);
     double[] gemValue = {3.6};
-    int dc = D20Roll.masterworkDc;
     try (var libs = mockStatic(TLibs.class);
         var valid = mockStatic(InfusedGemValidator.class);
         var qualityApi = mockStatic(QualityLoader.class);
@@ -413,7 +406,6 @@ class GemOutputTest {
       valid.when(() -> InfusedGemValidator.isInfused(gemItem)).thenReturn(true);
       qualityApi.when(() -> QualityLoader.getByAmount(100)).thenReturn(masterwork);
       qualityApi.when(() -> QualityLoader.resolveStatFactor(100)).thenReturn(100.0);
-      qualityApi.when(() -> QualityLoader.below(masterwork)).thenReturn(gleaming);
       // Each craft: the quality, the stat carry and the stat written to the jewelry.
       record Craft(Quality quality, double carry, double stat) {}
       java.util.function.Supplier<Craft> craft =
@@ -425,35 +417,21 @@ class GemOutputTest {
                 .setData(eq(ItemStats.ATTACK_DAMAGE), written.capture());
             return new Craft(r.getQuality(), r.getStatCarryPercent(), written.getValue().getValue());
           };
-      // Flawless gem, natural 20: Masterwork at the absolute max, 3.6 x 100% x 1.2.
+      // Natural 20: 3.6 x 100% x 1.2.
       D20Roll.die = () -> 20;
       assertEquals(new Craft(masterwork, 100, 4.32), craft.get());
-      // A total at the DC without a natural 20 still gets the full +20%.
-      D20Roll.masterworkDc = 15;
-      D20Roll.die = () -> 16;
-      assertEquals(new Craft(masterwork, 100, 4.32), craft.get());
-      // Flawless gem, natural 1: Gleaming at its top carry, then -20%.
+      // A natural 1 is still a Masterwork; the roll only lowers the stat, 3.6 x 100% x 0.8.
       D20Roll.die = () -> 1;
-      assertEquals(new Craft(gleaming, 65, 1.872), craft.get());
-      // A gem below the top can never make a Masterwork, even on a natural 20.
+      assertEquals(new Craft(masterwork, 100, 2.88), craft.get());
+      // A gem below the top of its spread makes a Masterwork too, 3.5 x 100% x 1.0.
       gemValue[0] = 3.5;
-      D20Roll.die = () -> 20;
-      assertEquals(new Craft(gleaming, 65, 2.73), craft.get());
-      // With no tier below, perfect work keeps its tier.
-      qualityApi.when(() -> QualityLoader.below(masterwork)).thenReturn(null);
-      assertEquals(new Craft(masterwork, 100, 4.2), craft.get());
-      qualityApi.when(() -> QualityLoader.below(masterwork)).thenReturn(gleaming);
-      // A reset gem with no stored rarity is checked against every rarity of its gem.
-      ItemStack reset = tagged(Material.DIAMOND);
-      when(station.getGem()).thenReturn(reset);
-      valid.when(() -> InfusedGemValidator.isInfused(reset)).thenReturn(true);
-      gemValue[0] = 3.6;
-      assertEquals(new Craft(masterwork, 100, 4.32), craft.get());
-      // A gem that is no longer configured cannot be Flawless.
+      D20Roll.die = () -> 10;
+      assertEquals(new Craft(masterwork, 100, 3.5), craft.get());
+      // So does a gem that is no longer configured.
       ConfigLoader.loadedGems.clear();
-      assertEquals(new Craft(gleaming, 65, 2.808), craft.get());
+      assertEquals(new Craft(masterwork, 100, 3.5), craft.get());
+      qualityApi.verify(() -> QualityLoader.getByAmount(100), times(4));
     } finally {
-      D20Roll.masterworkDc = dc;
       GoldsmithCache.jewelryGemStatBoostChances = boostChances;
       ConfigLoader.loadedGems.add(gem);
     }

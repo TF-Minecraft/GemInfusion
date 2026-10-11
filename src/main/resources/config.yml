@@ -37,15 +37,12 @@ d20:
     attribute: intelligence
     # A total of 1 or less gives the bottom of the spread, this total or more the top (a Flawless gem).
     flawless-dc: 20
-    # How far the spread reaches past each rarity's min and max, in percent. Changing it moves the top,
-    # so gems that were Flawless stop counting as Flawless.
+    # How far the spread reaches past each rarity's min and max, in percent.
     spread-percent: 20
-  # Goldsmithing: one craft roll when a gem piece is finished, shown to the crafter.
+  # Goldsmithing: one craft roll when a gem piece is finished. It only moves the jewelry stat and is not
+  # shown to the player. The quality, Masterwork included, comes from the recipe and hits alone.
   goldsmithing:
     attribute: dexterity
-    # A Masterwork needs a 100% recipe, 100% hits, a Flawless gem and a total of at least this.
-    # Perfect work that misses becomes the tier below at its top stat carry.
-    masterwork-dc: 20
     # Jewelry stat change for each point of the total above or below 10, and its cap, in percent.
     percent-per-point: 2
     max-percent: 20
