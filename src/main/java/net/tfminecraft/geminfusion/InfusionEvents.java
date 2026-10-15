@@ -1,8 +1,8 @@
 package net.tfminecraft.geminfusion;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -32,6 +32,49 @@ import net.Indyuce.mmoitems.api.item.mmoitem.MMOItem;
 
 public class InfusionEvents implements Listener{
 	public List<InfusionBlock> currentStations = new ArrayList<InfusionBlock>();
+	private final InfusionStationStore store;
+	private final List<BukkitRunnable> deliveries = new ArrayList<>();
+
+	public InfusionEvents() {
+		this(new InfusionStationStore());
+	}
+
+	InfusionEvents(InfusionStationStore store) {
+		this.store = store;
+	}
+
+	public void loadPersisted() {
+		for (BukkitRunnable delivery : deliveries) delivery.cancel();
+		deliveries.clear();
+		currentStations.clear();
+		currentStations.addAll(store.loadAll());
+		for (InfusionBlock station : currentStations) {
+			if (station.getInfusionHits() == 5) scheduleDrops(station);
+		}
+	}
+
+	public void flush() {
+		for (InfusionBlock station : currentStations) store.save(station);
+	}
+
+	public void shutdown() {
+		for (BukkitRunnable delivery : deliveries) delivery.cancel();
+		deliveries.clear();
+		flush();
+	}
+
+	private boolean deposit(Player player, InfusionBlock station, Gemstone gem) {
+		station.addGem(gem);
+		if (!store.save(station)) {
+			station.getCurrentItems().removeLast();
+			player.sendMessage(ChatColor.RED + "This infusion table could not be saved. Contact staff; your gem remains in your hand.");
+			return false;
+		}
+		ItemStack hand = player.getInventory().getItemInMainHand();
+		hand.setAmount(hand.getAmount() - 1);
+		return true;
+	}
+
 	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
 	@SuppressWarnings("deprecation")
 	@EventHandler
@@ -94,8 +137,7 @@ public class InfusionEvents implements Listener{
 					}
 					if(loc.equals(b.getLocation())) {
 						exists = true;
-						p.getInventory().getItemInMainHand().setAmount(p.getInventory().getItemInMainHand().getAmount()-1);
-						b.addGem(gem);
+						if (!deposit(p, b, gem)) return;
 						p.sendTitle(ChatColor.LIGHT_PURPLE + "Added " + gem.getColour() + gem.getName(), ChatColor.GRAY + "Current Gem Amount: " + ChatColor.YELLOW + b.getCurrentItems().size()+"/10", 1, 40, 20);
 						b.getLocation().getWorld().spawnParticle(Particle.ENCHANT, b.getParticleLocation(), 60);
 						p.getWorld().playSound(p.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 0.7f, 2);
@@ -106,8 +148,7 @@ public class InfusionEvents implements Listener{
 					iBlock.setLocation(loc);
 					iBlock.setParticleLocation(particleLoc);
 					iBlock.setInfustionHits(0);
-					p.getInventory().getItemInMainHand().setAmount(p.getInventory().getItemInMainHand().getAmount()-1);
-					iBlock.addGem(gem);
+					if (!deposit(p, iBlock, gem)) return;
 					p.sendTitle(ChatColor.LIGHT_PURPLE + "Added " + gem.getColour() + gem.getName(), ChatColor.GRAY + "Current Gem Amount: " + ChatColor.YELLOW + iBlock.getCurrentItems().size()+"/10", 1, 40, 20);
 					iBlock.getLocation().getWorld().spawnParticle(Particle.ENCHANT, iBlock.getParticleLocation(), 60);
 					p.getWorld().playSound(p.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 0.7f, 2);
@@ -129,6 +170,7 @@ public class InfusionEvents implements Listener{
 			InfusionBlock b = currentStations.get(i);
 			if(b.getLocation().equals(loc)) {
 				e.setCancelled(true);
+				if (b.getInfusionHits() >= 5) return;
 				if(b.getCurrentItems().size() > 0) {
 					Player p = e.getPlayer();
 					ItemStack item = p.getInventory().getItemInMainHand();
@@ -137,68 +179,78 @@ public class InfusionEvents implements Listener{
 					String itemType = ConfigLoader.infusionStaff.split("\\.")[0];
 					String itemID = ConfigLoader.infusionStaff.split("\\.")[1];
 					if(nbt.getType().equalsIgnoreCase(itemType) && nbt.getString("MMOITEMS_ITEM_ID").equalsIgnoreCase(itemID)) {
-						// Resolve the whole batch before consuming the staff or clearing the bench.
-						// A later config reload must not strand an already consumed batch.
-						List<GemRarity> batchRarities = new ArrayList<>();
+						// Build once while the player's attributes are available; persist the rolled items.
+						List<InfusionBlock.Drop> prepared = new ArrayList<>();
 						if (b.getInfusionHits() >= 4) {
 							try {
-								for (Gemstone ignored : b.getCurrentItems()) batchRarities.add(getRarity());
-							} catch (IllegalStateException invalidRarities) {
-								GoldsmithLog.warn(invalidRarities.getMessage());
-								p.sendMessage(ChatColor.RED + "Infusion rarities are not configured correctly. Contact staff; your gems remain on the bench.");
+								for (Gemstone gem : b.getCurrentItems()) {
+									GemRarity rarity = getRarity();
+									ItemStack output = Objects.requireNonNull(getInfusedGem(p, gem, b.getCurrentItems().size(), rarity), "Cannot build infused gem");
+									String announcement = rarity.shouldAnnounce()
+											? "§e" + p.getName() + " just infused a " + rarity.getName() + " " + gem.getColour() + gem.getName() + "§e Gemstone" : "";
+									prepared.add(new InfusionBlock.Drop(output, announcement));
+								}
+							} catch (RuntimeException invalidBatch) {
+								GoldsmithLog.warn(invalidBatch.getMessage());
+								p.sendMessage(ChatColor.RED + "Infusion could not be prepared. Contact staff; your gems remain on the bench.");
 								return;
 							}
 						}
 						b.setInfustionHits(b.getInfusionHits()+1);
+						b.pendingDrops.addAll(prepared);
+						if (!store.save(b)) {
+							b.setInfustionHits(b.getInfusionHits()-1);
+							b.pendingDrops.clear();
+							p.sendMessage(ChatColor.RED + "Infusion progress could not be saved. Contact staff; your gems remain on the bench.");
+							return;
+						}
 						p.sendTitle(ChatColor.LIGHT_PURPLE + "Infusing...", ChatColor.GREEN + "Progress: " + ChatColor.YELLOW + b.getInfusionHits() + "/5", 1, 40, 20);
 						b.getLocation().getWorld().spawnParticle(Particle.FLAME, b.getParticleLocation(), 60);
 						b.getLocation().getWorld().spawnParticle(Particle.CRIT, b.getParticleLocation(), 60);
 						p.getWorld().playSound(p.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_HIT, 1f, 0.2f*b.getInfusionHits());
 						p.getWorld().playSound(p.getLocation(), Sound.ENTITY_WITHER_SHOOT, 0.2f, 0.2f*b.getInfusionHits());
 						if(b.getInfusionHits() >= 5) {
-							currentStations.remove(b);
 							p.getInventory().getItemInMainHand().setAmount(p.getInventory().getItemInMainHand().getAmount()-1);
 							b.getParticleLocation().getWorld().spawnEntity(b.getParticleLocation(), EntityType.LIGHTNING_BOLT);
 							b.getLocation().getWorld().spawnParticle(Particle.FLAME, b.getParticleLocation(), 600);
 							p.getWorld().playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 1f, 0.7f);
-							new BukkitRunnable()
-							{
-								Integer i = 0;
-								public void run()
-								   {
-									if(i < b.getCurrentItems().size()) {
-										Gemstone gem = b.getCurrentItems().get(i);
-										GemRarity r = batchRarities.get(i);
-										if(r.shouldAnnounce()) {
-											for(Player player : Bukkit.getOnlinePlayers()) {
-												player.sendMessage("§e"+p.getName()+" just infused a "+r.getName()+" "+gem.getColour()+gem.getName()+"§e Gemstone");
-											}
-										}
-										ItemStack dropGem = getInfusedGem(p, gem, b.getCurrentItems().size(), r);
-										Location dropLocation = b.getLocation().clone().add(0.5, 1.1, 0.5); // Center-top of the block
-										Item dropped = p.getWorld().dropItem(dropLocation, dropGem);
-
-										// Random upward and outward velocity
-										Vector velocity = new Vector(
-											(Math.random() - 0.5) * 0.2,  // X: between -0.3 and +0.3
-											0.2 + Math.random() * 0.2,    // Y: between 0.2 and 0.4
-											(Math.random() - 0.5) * 0.2   // Z: between -0.3 and +0.3
-										);
-										dropped.setVelocity(velocity);
-										p.getWorld().playSound(p.getLocation(), Sound.ENTITY_GLOW_ITEM_FRAME_REMOVE_ITEM, 1f, 1f);
-										b.getLocation().getWorld().spawnParticle(Particle.FLAME, b.getParticleLocation(), 20);
-									} else {
-										this.cancel();
-									}
-									i++;
-								   }
-							}.runTaskTimer(InfusionMain.plugin, 30L, 2L);
+							scheduleDrops(b);
 						}
 					}
 				}
 			}
 		}
 	}
+	private void scheduleDrops(InfusionBlock station) {
+		BukkitRunnable delivery = new BukkitRunnable() {
+			@Override
+			public void run() {
+				// Retry failed checkpoints before delivering another item.
+				if (!store.save(station)) return;
+				if (station.pendingDrops.isEmpty()) {
+					store.delete(station);
+					currentStations.remove(station);
+					deliveries.remove(this);
+					cancel();
+					return;
+				}
+				InfusionBlock.Drop output = station.pendingDrops.getFirst();
+				Location dropLocation = station.getLocation().clone().add(0.5, 1.1, 0.5);
+				Item dropped = dropLocation.getWorld().dropItem(dropLocation, output.item());
+				station.pendingDrops.removeFirst();
+				store.save(station);
+				if (!output.announcement().isEmpty()) {
+					for (Player player : Bukkit.getOnlinePlayers()) player.sendMessage(output.announcement());
+				}
+				dropped.setVelocity(new Vector((Math.random() - 0.5) * 0.2, 0.2 + Math.random() * 0.2, (Math.random() - 0.5) * 0.2));
+				dropLocation.getWorld().playSound(dropLocation, Sound.ENTITY_GLOW_ITEM_FRAME_REMOVE_ITEM, 1f, 1f);
+				dropLocation.getWorld().spawnParticle(Particle.FLAME, station.getParticleLocation(), 20);
+			}
+		};
+		delivery.runTaskTimer(InfusionMain.plugin, 30L, 2L);
+		deliveries.add(delivery);
+	}
+
 	public GemRarity getRarity() {
 		return getRarity(Math.random());
 	}
