@@ -19,6 +19,7 @@ import org.mockito.MockedStatic;
 
 class InfusionEventsTest {
   InfusionEvents events;
+  InfusionStationStore store;
   World world;
   Player player;
   PlayerInventory inventory;
@@ -31,7 +32,10 @@ class InfusionEventsTest {
 
   @BeforeEach
   void setup() {
-    events = new InfusionEvents();
+    store = mock(InfusionStationStore.class);
+    when(store.save(any())).thenReturn(true);
+    when(store.delete(any())).thenReturn(true);
+    events = new InfusionEvents(store);
     world = mock(World.class);
     player = mock(Player.class);
     inventory = mock(PlayerInventory.class);
@@ -254,7 +258,7 @@ class InfusionEventsTest {
       when(scheduler.runTaskTimer(same(InfusionMain.plugin), capture.capture(), eq(30L), eq(2L)))
           .thenReturn(task);
       events.infuseHitEvent(event(Action.LEFT_CLICK_BLOCK, EquipmentSlot.HAND));
-      assertTrue(events.currentStations.isEmpty());
+      assertEquals(List.of(s), events.currentStations);
       assertEquals(5, s.getInfusionHits());
       verify(hand).setAmount(4);
       ConfigLoader.loadedRarities
@@ -266,7 +270,109 @@ class InfusionEventsTest {
       verify(world, times(2)).dropItem(location.clone().add(.5, 1.1, .5), built);
       capture.getValue().run();
       verify(scheduler).cancelTask(7);
+      assertTrue(events.currentStations.isEmpty());
       verify(player).sendMessage(contains("just infused"));
+    } finally {
+      InfusionMain.plugin = previous;
+    }
+  }
+
+  @Test
+  void failedDepositCheckpointKeepsNewAndExistingGemsInHand() {
+    when(store.save(any())).thenReturn(false);
+    events.addGemEvent(event(Action.RIGHT_CLICK_BLOCK, EquipmentSlot.HAND));
+    assertTrue(events.currentStations.isEmpty());
+    InfusionBlock existing = station(location, 2, 0);
+    events.addGemEvent(event(Action.RIGHT_CLICK_BLOCK, EquipmentSlot.HAND));
+    assertEquals(2, existing.currentGems.size());
+    verify(hand, never()).setAmount(anyInt());
+    verify(player, times(2)).sendMessage(contains("gem remains in your hand"));
+  }
+
+  @Test
+  void failedProgressCheckpointAndFailedOutputBuildLeaveBatchAndStaffUntouched() {
+    InfusionBlock station = station(location, 2, 3);
+    when(nbt.getType()).thenReturn("STAFF");
+    when(nbt.getString("MMOITEMS_ITEM_ID")).thenReturn("INFUSER");
+    when(store.save(any())).thenReturn(false);
+    events.infuseHitEvent(event(Action.LEFT_CLICK_BLOCK, EquipmentSlot.HAND));
+    assertEquals(3, station.getInfusionHits());
+    station.setInfustionHits(4);
+    GemRarity rarity = mock(GemRarity.class);
+    when(rarity.getChance()).thenReturn(1.0);
+    ConfigLoader.loadedRarities.add(rarity);
+    try (var builder = mockStatic(InfusedGemBuilder.class);
+        var log = mockStatic(net.tfminecraft.geminfusion.goldsmith.GoldsmithLog.class)) {
+      ItemStack output = mock(ItemStack.class);
+      builder.when(() -> InfusedGemBuilder.buildInfusedGem(gem, rarity, 2, player)).thenReturn(output);
+      events.infuseHitEvent(event(Action.LEFT_CLICK_BLOCK, EquipmentSlot.HAND));
+      assertEquals(4, station.getInfusionHits());
+      assertTrue(station.pendingDrops.isEmpty());
+      builder.when(() -> InfusedGemBuilder.buildInfusedGem(gem, rarity, 2, player)).thenReturn(output, null);
+      events.infuseHitEvent(event(Action.LEFT_CLICK_BLOCK, EquipmentSlot.HAND));
+      assertEquals(4, station.getInfusionHits());
+      assertTrue(station.pendingDrops.isEmpty());
+      assertEquals(2, station.currentGems.size());
+      verify(hand, never()).setAmount(anyInt());
+      verify(player, times(3)).sendMessage(contains("gems remain on the bench"));
+    }
+  }
+
+  @Test
+  void completedBenchRejectsMoreStaffHitsWhileWaitingForOutput() {
+    InfusionBlock station = station(location, 2, 5);
+    when(nbt.getType()).thenReturn("STAFF");
+    when(nbt.getString("MMOITEMS_ITEM_ID")).thenReturn("INFUSER");
+    events.infuseHitEvent(event(Action.LEFT_CLICK_BLOCK, EquipmentSlot.HAND));
+    assertEquals(5, station.getInfusionHits());
+    verify(hand, never()).setAmount(anyInt());
+    verify(store, never()).save(any());
+  }
+
+  @Test
+  void restartResumesOnlyUndeliveredOutputWithoutPlayerAndRetriesFailedCheckpoints() {
+    InfusionBlock station = station(location, 2, 5);
+    ItemStack first = mock(ItemStack.class), second = mock(ItemStack.class);
+    station.pendingDrops.add(new InfusionBlock.Drop(first, ""));
+    station.pendingDrops.add(new InfusionBlock.Drop(second, "remaining announcement"));
+    when(store.loadAll()).thenReturn(List.of(station));
+    InfusionMain previous = InfusionMain.plugin;
+    InfusionMain.plugin = mock(InfusionMain.class);
+    BukkitScheduler scheduler = mock(BukkitScheduler.class);
+    BukkitTask task = mock(BukkitTask.class);
+    when(task.getTaskId()).thenReturn(7);
+    when(world.dropItem(any(Location.class), any(ItemStack.class))).thenReturn(mock(Item.class));
+    try (var bukkit = mockStatic(Bukkit.class)) {
+      bukkit.when(Bukkit::getScheduler).thenReturn(scheduler);
+      bukkit.when(Bukkit::getOnlinePlayers).thenReturn(List.of(player));
+      var capture = org.mockito.ArgumentCaptor.forClass(Runnable.class);
+      when(scheduler.runTaskTimer(same(InfusionMain.plugin), capture.capture(), eq(30L), eq(2L))).thenReturn(task);
+      events.loadPersisted();
+      capture.getValue().run();
+      verify(world).dropItem(location.clone().add(.5, 1.1, .5), first);
+      assertEquals(1, station.pendingDrops.size());
+      // Reload cancels the old delivery task; shutdown checkpoints the remainder.
+      events.loadPersisted();
+      events.shutdown();
+      verify(scheduler, times(2)).cancelTask(7);
+      events.loadPersisted();
+      when(store.save(any())).thenReturn(false);
+      capture.getValue().run();
+      assertEquals(1, station.pendingDrops.size());
+      verify(world, never()).dropItem(any(Location.class), same(second));
+      when(store.save(any())).thenReturn(true);
+      capture.getValue().run();
+      when(store.delete(any())).thenReturn(false);
+      capture.getValue().run();
+      assertEquals(List.of(station), events.currentStations);
+      assertTrue(station.pendingDrops.isEmpty());
+      when(store.delete(any())).thenReturn(true);
+      capture.getValue().run();
+      assertTrue(events.currentStations.isEmpty());
+      verify(world, times(1)).dropItem(location.clone().add(.5, 1.1, .5), first);
+      verify(world, times(1)).dropItem(location.clone().add(.5, 1.1, .5), second);
+      verify(player).sendMessage("remaining announcement");
+      verify(store, times(2)).delete(station);
     } finally {
       InfusionMain.plugin = previous;
     }

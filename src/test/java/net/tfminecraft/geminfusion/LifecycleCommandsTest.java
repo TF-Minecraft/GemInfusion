@@ -59,6 +59,33 @@ class LifecycleCommandsTest {
   }
 
   @Test
+  void unfinishedInfusionSurvivesPluginRestart() throws Exception {
+    MockBukkit.createMockPlugin("TLibs");
+    MockBukkit.createMockPlugin("MMOItems");
+    MockBukkit.createMockPlugin("MythicLib");
+    InfusionMain plugin = MockBukkit.load(InfusionMain.class);
+    var field = InfusionMain.class.getDeclaredField("events");
+    field.setAccessible(true);
+    InfusionEvents events = (InfusionEvents) field.get(plugin);
+    InfusionBlock station = new InfusionBlock();
+    Location location = server.addSimpleWorld("world").getBlockAt(1, 2, 3).getLocation();
+    station.setLocation(location);
+    station.setParticleLocation(location.clone().add(.5, 1, .5));
+    station.setInfustionHits(0);
+    for (int i = 0; i < 10; i++) station.addGem(ConfigLoader.loadedGems.get(i % 4));
+    List<String> expected = station.getCurrentItems().stream().map(Gemstone::getId).toList();
+    events.currentStations.add(station);
+    plugin.onDisable();
+    events.currentStations.clear();
+    plugin.onEnable();
+    assertEquals(1, events.currentStations.size(), "Restart must restore deposited gems");
+    InfusionBlock restored = events.currentStations.getFirst();
+    assertEquals(location, restored.getLocation());
+    assertEquals(0, restored.getInfusionHits());
+    assertEquals(expected, restored.getCurrentItems().stream().map(Gemstone::getId).toList());
+  }
+
+  @Test
   void commandsCoverUsageReloadPermissionsAndProjectSelection() {
     CommandManager commands = new CommandManager();
     Command command = mock(Command.class);

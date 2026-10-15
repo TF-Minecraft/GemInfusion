@@ -46,6 +46,7 @@ public class InfusionMain extends JavaPlugin {
 		config = getConfig();
 		loader.loadConfig(config);
 		loadGoldsmithConfigs();
+		events.loadPersisted();
 
 		getServer().getPluginManager().registerEvents(events, this);
 		getServer().getPluginManager().registerEvents(goldsmithStations, this);
@@ -56,12 +57,16 @@ public class InfusionMain extends JavaPlugin {
 		getCommand(commands.cmd1).setExecutor(commands);
 		getCommand(commands.cmd1).setTabCompleter(commands);
 		goldsmithStations.loadPersisted();
-		getServer().getScheduler().runTaskTimer(this, () -> goldsmithStations.flush(false), 20L * 60, 20L * 60);
+		getServer().getScheduler().runTaskTimer(this, () -> {
+			events.flush();
+			goldsmithStations.flush(false);
+		}, 20L * 60, 20L * 60);
 		GoldsmithLog.info("Loaded " + JewelryProjectLoader.get().size() + " goldsmithing projects");
 	}
 
 	@Override
 	public void onDisable() {
+		events.shutdown();
 		goldsmithStations.flush(true);
 	}
 

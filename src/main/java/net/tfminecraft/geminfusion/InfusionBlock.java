@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.bukkit.Location;
+import org.bukkit.inventory.ItemStack;
 
 public class InfusionBlock {
 	public Location loc;
@@ -11,6 +12,9 @@ public class InfusionBlock {
 	public Location particleLoc;
 	public Integer infusionHits;
 	public List<Gemstone> currentGems = new ArrayList<Gemstone>();
+	public List<Drop> pendingDrops = new ArrayList<>();
+
+	public record Drop(ItemStack item, String announcement) {}
 	
 	//Setters
 	public void setToken(boolean b) {
