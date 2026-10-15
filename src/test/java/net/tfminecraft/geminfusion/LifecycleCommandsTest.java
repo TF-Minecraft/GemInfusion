@@ -118,8 +118,11 @@ class LifecycleCommandsTest {
     when(command.getName()).thenReturn("other");
     assertNull(commands.onTabComplete(sender, command, "x", new String[0]));
     when(command.getName()).thenReturn("geminfusion");
+    assertTrue(commands.onTabComplete(sender, command, "x", new String[] {""}).isEmpty());
+    assertTrue(commands.onTabComplete(sender, command, "x", new String[] {"RE"}).isEmpty());
+    when(sender.hasPermission(Permissions.ADMIN)).thenReturn(true);
     assertEquals(
-        List.of("reload", "select"),
+        List.of("reload"),
         commands.onTabComplete(sender, command, "x", new String[] {""}));
     assertEquals(
         List.of("reload"), commands.onTabComplete(sender, command, "x", new String[] {"RE"}));
@@ -127,15 +130,18 @@ class LifecycleCommandsTest {
         commands.onTabComplete(sender, command, "x", new String[] {"unknown", ""}).isEmpty());
     assertTrue(commands.onTabComplete(sender, command, "x", new String[0]).isEmpty());
     assertTrue(commands.onTabComplete(sender, command, "x", new String[] {"select", ""}).isEmpty());
-    when(sender.hasPermission(Permissions.ADMIN)).thenReturn(true);
+    Player player = mock(Player.class);
+    when(player.hasPermission(Permissions.ADMIN)).thenReturn(true);
+    assertEquals(List.of("reload", "select"), commands.onTabComplete(player, command, "x", new String[] {""}));
+    assertEquals(List.of("select"), commands.onTabComplete(player, command, "x", new String[] {"SE"}));
     JewelryProjectLoader.get().put("other", mock(JewelryProject.class));
     for (int i = 0; i < 45; i++)
       JewelryProjectLoader.get().put("ring" + i, mock(JewelryProject.class));
     assertEquals(
-        40, commands.onTabComplete(sender, command, "x", new String[] {"select", "RING"}).size());
+        40, commands.onTabComplete(player, command, "x", new String[] {"select", "RING"}).size());
     assertEquals(
         List.of("other"),
-        commands.onTabComplete(sender, command, "x", new String[] {"select", "o"}));
+        commands.onTabComplete(player, command, "x", new String[] {"select", "o"}));
   }
 
   @Test
