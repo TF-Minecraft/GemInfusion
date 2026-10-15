@@ -1,9 +1,13 @@
 package net.tfminecraft.geminfusion;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -55,6 +59,7 @@ final class InfusionStationStore {
 
 	boolean save(InfusionBlock station) {
 		Path file = fileFor(station.getLocation());
+		boolean replaced = false;
 		try {
 			if (rejected.contains(file)) throw new IOException("Repair the retained snapshot before using this table");
 			YamlConfiguration yaml = new YamlConfiguration();
@@ -76,23 +81,34 @@ final class InfusionStationStore {
 			Files.createDirectories(folder());
 			Path temporary = Files.createTempFile(folder(), "infusion-", ".tmp");
 			try {
-				yaml.save(temporary.toFile());
+				ByteBuffer bytes = ByteBuffer.wrap(yaml.saveToString().getBytes(StandardCharsets.UTF_8));
+				try (FileChannel channel = FileChannel.open(temporary, StandardOpenOption.WRITE)) {
+					while (bytes.hasRemaining()) channel.write(bytes);
+					channel.force(true);
+				}
 				Files.move(temporary, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+				replaced = true;
+				try (FileChannel directory = FileChannel.open(folder(), StandardOpenOption.READ)) {
+					directory.force(true);
+				}
 			} finally {
 				Files.deleteIfExists(temporary);
 			}
 			return true;
 		} catch (IOException | IllegalArgumentException ex) {
 			GoldsmithLog.warn("Cannot save infusion table " + file.getFileName() + ": " + ex.getMessage());
-			return false;
+			// A post-rename sync failure must not roll back items already recorded on disk.
+			return replaced;
 		}
 	}
 
-	void delete(InfusionBlock station) {
+	boolean delete(InfusionBlock station) {
 		try {
 			Files.deleteIfExists(fileFor(station.getLocation()));
+			return true;
 		} catch (IOException ex) {
 			GoldsmithLog.warn("Cannot delete finished infusion table: " + ex.getMessage());
+			return false;
 		}
 	}
 

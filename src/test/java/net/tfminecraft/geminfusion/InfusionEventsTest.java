@@ -34,6 +34,7 @@ class InfusionEventsTest {
   void setup() {
     store = mock(InfusionStationStore.class);
     when(store.save(any())).thenReturn(true);
+    when(store.delete(any())).thenReturn(true);
     events = new InfusionEvents(store);
     world = mock(World.class);
     player = mock(Player.class);
@@ -361,12 +362,17 @@ class InfusionEventsTest {
       verify(world, never()).dropItem(any(Location.class), same(second));
       when(store.save(any())).thenReturn(true);
       capture.getValue().run();
+      when(store.delete(any())).thenReturn(false);
+      capture.getValue().run();
+      assertEquals(List.of(station), events.currentStations);
+      assertTrue(station.pendingDrops.isEmpty());
+      when(store.delete(any())).thenReturn(true);
       capture.getValue().run();
       assertTrue(events.currentStations.isEmpty());
       verify(world, times(1)).dropItem(location.clone().add(.5, 1.1, .5), first);
       verify(world, times(1)).dropItem(location.clone().add(.5, 1.1, .5), second);
       verify(player).sendMessage("remaining announcement");
-      verify(store).delete(station);
+      verify(store, times(2)).delete(station);
     } finally {
       InfusionMain.plugin = previous;
     }

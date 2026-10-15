@@ -228,7 +228,7 @@ public class InfusionEvents implements Listener{
 				// Retry failed checkpoints before delivering another item.
 				if (!store.save(station)) return;
 				if (station.pendingDrops.isEmpty()) {
-					store.delete(station);
+					if (!store.delete(station)) return;
 					currentStations.remove(station);
 					deliveries.remove(this);
 					cancel();

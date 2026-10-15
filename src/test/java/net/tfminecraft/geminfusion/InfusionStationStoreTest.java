@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.nio.file.*;
+import java.nio.channels.FileChannel;
 import java.util.*;
 import net.tfminecraft.geminfusion.goldsmith.GoldsmithLog;
 import org.bukkit.*;
@@ -105,8 +106,8 @@ class InfusionStationStoreTest {
     restored.pendingDrops.clear();
     assertTrue(store.save(restored));
     assertTrue(new InfusionStationStore().loadAll().getFirst().pendingDrops.isEmpty());
-    store.delete(restored);
-    store.delete(restored);
+    assertTrue(store.delete(restored));
+    assertTrue(store.delete(restored));
     assertTrue(store.loadAll().isEmpty());
   }
 
@@ -165,7 +166,7 @@ class InfusionStationStoreTest {
         Files.setPosixFilePermissions(store.folder(), Set.of());
         assertThrows(IllegalStateException.class, store::loadAll);
         assertFalse(store.save(original));
-        store.delete(original);
+        assertFalse(store.delete(original));
       } finally {
         Files.setPosixFilePermissions(store.folder(), permissions);
       }
@@ -187,6 +188,21 @@ class InfusionStationStoreTest {
       }
       Files.writeString(store.folder().resolve("ignored.tmp"), "ignored");
       assertTrue(store.loadAll().isEmpty());
+    }
+  }
+
+  @Test
+  void directorySyncFailureAfterRenameKeepsTheCommittedStateAccepted() throws Exception {
+    InfusionBlock original = station(0);
+    assertTrue(store.save(original));
+    original.setInfustionHits(1);
+    try (var channels = mockStatic(FileChannel.class, CALLS_REAL_METHODS);
+        var log = mockStatic(GoldsmithLog.class)) {
+      channels.when(() -> FileChannel.open(store.folder(), StandardOpenOption.READ))
+          .thenThrow(new java.io.IOException("Directory sync failed"));
+      assertTrue(store.save(original), "A committed deposit must still consume its held gem");
+      assertEquals(1, new InfusionStationStore().loadAll().getFirst().getInfusionHits());
+      log.verify(() -> GoldsmithLog.warn(contains("Directory sync failed")));
     }
   }
 }
