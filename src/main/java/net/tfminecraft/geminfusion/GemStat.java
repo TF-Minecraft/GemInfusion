@@ -1,11 +1,17 @@
 package net.tfminecraft.geminfusion;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.bukkit.configuration.ConfigurationSection;
 
 public class GemStat {
+	/** {@code min-max}, or one number for a fixed stat. */
+	private static final Pattern RANGE = Pattern.compile("(\\d+(?:\\.\\d+)?)(?:\\s*-\\s*(\\d+(?:\\.\\d+)?))?");
+
 	private final String id;
 	private final String statId;
 	private final double min;
@@ -35,7 +41,63 @@ public class GemStat {
 	}
 
 	/**
-	 * New shape: {@code stat} / {@code min} / {@code max}.
+	 * Reads a gem's stat for each rarity. Compact shape: one {@code stat} for the gem and {@code bands}, either the
+	 * name of a set under the top-level {@code stat-bands} or a section of {@code <rarity>: min-max}. Older configs
+	 * list {@code rarities.<rarity>} blocks instead (see {@link #parse}), which still load.
+	 */
+	public static List<GemStat> parseGem(String gemId, ConfigurationSection gem, ConfigurationSection statBands) {
+		List<GemStat> stats = new ArrayList<>();
+		if (gem.contains("bands")) {
+			if (gem.contains("rarities")) {
+				warn("Gem '" + gemId + "' has both bands and rarities; using bands.");
+			}
+			String statId = gem.getString("stat");
+			if (statId == null || statId.isBlank()) {
+				warn("Gem '" + gemId + "' has bands but no stat, skipping its stats.");
+				return stats;
+			}
+			ConfigurationSection bands = gem.isConfigurationSection("bands") ? gem.getConfigurationSection("bands")
+					: statBands == null ? null : statBands.getConfigurationSection(gem.getString("bands"));
+			if (bands == null) {
+				warn("Gem '" + gemId + "' uses unknown stat-bands set '" + gem.getString("bands")
+						+ "', skipping its stats.");
+				return stats;
+			}
+			for (String rarityId : bands.getKeys(false)) {
+				GemStat stat = parseRange(gemId, rarityId, statId, bands.getString(rarityId));
+				if (stat != null) {
+					stats.add(stat);
+				}
+			}
+			return stats;
+		}
+		ConfigurationSection rarities = gem.getConfigurationSection("rarities");
+		if (rarities == null) {
+			warn("Gem '" + gemId + "' has neither bands nor rarities, skipping its stats.");
+			return stats;
+		}
+		for (String rarityId : rarities.getKeys(false)) {
+			GemStat stat = parse(gemId, rarityId, rarities.getConfigurationSection(rarityId));
+			if (stat != null) {
+				stats.add(stat);
+			}
+		}
+		return stats;
+	}
+
+	private static GemStat parseRange(String gemId, String rarityId, String statId, String text) {
+		Matcher range = RANGE.matcher(String.valueOf(text).trim());
+		if (!range.matches()) {
+			warn("Gem '" + gemId + "' " + rarityId + " band '" + text + "' is not min-max, skipping.");
+			return null;
+		}
+		double min = Double.parseDouble(range.group(1));
+		double max = range.group(2) == null ? min : Double.parseDouble(range.group(2));
+		return new GemStat(rarityId, statId, min, max);
+	}
+
+	/**
+	 * Old per-rarity shape: {@code stat} / {@code min} / {@code max}.
 	 * Legacy: first entry of {@code stats: - type(min-max)}.
 	 * Returns null when the block cannot be used.
 	 */

@@ -65,14 +65,9 @@ public class ConfigLoader {
 		gem.setSocketColour(config.getConfigurationSection("gems."+key).getString("socket_colour"));
 		gem.setSocketNameColour(ChatColor.valueOf(config.getConfigurationSection("gems."+key).getString("socket_name_colour").toUpperCase()));
 		gem.setMMOItem(config.getConfigurationSection("gems."+key).getString("gem"));
-		Set<String> set = config.getConfigurationSection("gems."+key+".rarities").getKeys(false);
-
-		List<String> list = new ArrayList<String>(set);
-		for(String id : list) {
-			GemStat stat = GemStat.parse(key, id, config.getConfigurationSection("gems."+key+".rarities."+id));
-			if (stat != null) {
-				gem.addStat(stat);
-			}
+		for (GemStat stat : GemStat.parseGem(key, config.getConfigurationSection("gems."+key),
+				config.getConfigurationSection("stat-bands"))) {
+			gem.addStat(stat);
 		}
 		return gem;
 	}

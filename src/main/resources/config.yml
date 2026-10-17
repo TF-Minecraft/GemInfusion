@@ -72,6 +72,38 @@ rarities:
         name: "§6Legendary"
         chance: 3
         announce: true
+
+# Stat ranges for each rarity, shared by gems that roll the same numbers. Each range is min-max,
+# before the d20 spread.
+stat-bands:
+    tier-1:
+        common: 1.00-1.20
+        rare: 1.30-1.50
+        epic: 1.60-1.80
+        legendary: 1.90-2.00
+    tier-2:
+        common: 2.00-2.20
+        rare: 2.30-2.50
+        epic: 2.60-2.80
+        legendary: 2.90-3.00
+    tier-3:
+        common: 3.00-3.20
+        rare: 3.30-3.50
+        epic: 3.60-3.80
+        legendary: 3.90-4.00
+    tier-4:
+        common: 4.00-4.20
+        rare: 4.30-4.50
+        epic: 4.60-4.80
+        legendary: 4.90-5.00
+    tier-5:
+        common: 5.00-5.20
+        rare: 5.30-5.50
+        epic: 5.60-5.80
+        legendary: 5.90-6.00
+
+# Each gem gives one stat. bands names a stat-bands set, or lists the gem's own min-max for each rarity.
+# Older configs that list stat, min and max under rarities: still load.
 gems:
     agate:
         gem: gemstones.agate
@@ -81,917 +113,349 @@ gems:
         colour: white
         socket_colour: Basic Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: max_health
-                min: 0.20
-                max: 0.30
-            rare:
-                stat: max_health
-                min: 0.30
-                max: 0.40
-            epic:
-                stat: max_health
-                min: 0.40
-                max: 0.50
-            legendary:
-                stat: max_health
-                min: 0.50
-                max: 0.60
+        stat: max_health
+        bands:
+            common: 0.20-0.30
+            rare: 0.30-0.40
+            epic: 0.40-0.50
+            legendary: 0.50-0.60
     jasper:
         gem: gemstones.jasper
         name: "Jasper"
         colour: white
         socket_colour: Basic Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: armor
-                min: 0.05
-                max: 0.10
-            rare:
-                stat: armor
-                min: 0.10
-                max: 0.15
-            epic:
-                stat: armor
-                min: 0.15
-                max: 0.20
-            legendary:
-                stat: armor
-                min: 0.20
-                max: 0.25
+        stat: armor
+        bands:
+            common: 0.05-0.10
+            rare: 0.10-0.15
+            epic: 0.15-0.20
+            legendary: 0.20-0.25
     onyx:
         gem: gemstones.onyx
         name: "Onyx"
         colour: white
         socket_colour: Basic Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: physical_damage_reduction
-                min: 1.00
-                max: 1.20
-            rare:
-                stat: physical_damage_reduction
-                min: 1.30
-                max: 1.50
-            epic:
-                stat: physical_damage_reduction
-                min: 1.60
-                max: 1.80
-            legendary:
-                stat: physical_damage_reduction
-                min: 1.90
-                max: 2.00
+        stat: physical_damage_reduction
+        bands: tier-1
     tourmaline:
         gem: gemstones.tourmaline
         name: "Tourmaline"
         colour: white
         socket_colour: Basic Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: projectile_damage_reduction
-                min: 1.00
-                max: 1.20
-            rare:
-                stat: projectile_damage_reduction
-                min: 1.30
-                max: 1.50
-            epic:
-                stat: projectile_damage_reduction
-                min: 1.60
-                max: 1.80
-            legendary:
-                stat: projectile_damage_reduction
-                min: 1.90
-                max: 2.00
+        stat: projectile_damage_reduction
+        bands: tier-1
     pearl:
         gem: gemstones.pearl
         name: "Pearl"
         colour: white
         socket_colour: Basic Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: magic_damage_reduction
-                min: 1.00
-                max: 1.20
-            rare:
-                stat: magic_damage_reduction
-                min: 1.30
-                max: 1.50
-            epic:
-                stat: magic_damage_reduction
-                min: 1.60
-                max: 1.80
-            legendary:
-                stat: magic_damage_reduction
-                min: 1.90
-                max: 2.00
+        stat: magic_damage_reduction
+        bands: tier-1
     coral:
         gem: gemstones.coral
         name: "Coral"
         colour: white
         socket_colour: Basic Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: physical_damage
-                min: 2.00
-                max: 2.20
-            rare:
-                stat: physical_damage
-                min: 2.30
-                max: 2.50
-            epic:
-                stat: physical_damage
-                min: 2.60
-                max: 2.80
-            legendary:
-                stat: physical_damage
-                min: 2.90
-                max: 3.00
+        stat: physical_damage
+        bands: tier-2
     chrysoprase:
         gem: gemstones.chrysoprase
         name: "Chrysoprase"
         colour: white
         socket_colour: Basic Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: projectile_damage
-                min: 2.00
-                max: 2.20
-            rare:
-                stat: projectile_damage
-                min: 2.30
-                max: 2.50
-            epic:
-                stat: projectile_damage
-                min: 2.60
-                max: 2.80
-            legendary:
-                stat: projectile_damage
-                min: 2.90
-                max: 3.00
+        stat: projectile_damage
+        bands: tier-2
     larimar:
         gem: gemstones.larimar
         name: "Larimar"
         colour: white
         socket_colour: Basic Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: magic_damage
-                min: 2.00
-                max: 2.20
-            rare:
-                stat: magic_damage
-                min: 2.30
-                max: 2.50
-            epic:
-                stat: magic_damage
-                min: 2.60
-                max: 2.80
-            legendary:
-                stat: magic_damage
-                min: 2.90
-                max: 3.00
+        stat: magic_damage
+        bands: tier-2
     rhodonite:
         gem: gemstones.rhodonite
         name: "Rhodonite"
         colour: white
         socket_colour: Basic Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: spell_vampirism
-                min: 2.00
-                max: 2.20
-            rare:
-                stat: spell_vampirism
-                min: 2.30
-                max: 2.50
-            epic:
-                stat: spell_vampirism
-                min: 2.60
-                max: 2.80
-            legendary:
-                stat: spell_vampirism
-                min: 2.90
-                max: 3.00
+        stat: spell_vampirism
+        bands: tier-2
     vesuvianite:
         gem: gemstones.vesuvianite
         name: "Vesuvianite"
         colour: white
         socket_colour: Basic Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: lifesteal
-                min: 2.00
-                max: 2.20
-            rare:
-                stat: lifesteal
-                min: 2.30
-                max: 2.50
-            epic:
-                stat: lifesteal
-                min: 2.60
-                max: 2.80
-            legendary:
-                stat: lifesteal
-                min: 2.90
-                max: 3.00
+        stat: lifesteal
+        bands: tier-2
     turquoise:
         gem: gemstones.turquoise
         name: "Turquoise"
         colour: white
         socket_colour: Polished Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: max_health
-                min: 0.60
-                max: 0.70
-            rare:
-                stat: max_health
-                min: 0.70
-                max: 0.80
-            epic:
-                stat: max_health
-                min: 0.80
-                max: 0.90
-            legendary:
-                stat: max_health
-                min: 0.90
-                max: 1.00
+        stat: max_health
+        bands:
+            common: 0.60-0.70
+            rare: 0.70-0.80
+            epic: 0.80-0.90
+            legendary: 0.90-1.00
     peridot:
         gem: gemstones.peridot
         name: "Peridot"
         colour: white
         socket_colour: Polished Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: armor
-                min: 0.25
-                max: 0.30
-            rare:
-                stat: armor
-                min: 0.30
-                max: 0.35
-            epic:
-                stat: armor
-                min: 0.35
-                max: 0.40
-            legendary:
-                stat: armor
-                min: 0.40
-                max: 0.45
+        stat: armor
+        bands:
+            common: 0.25-0.30
+            rare: 0.30-0.35
+            epic: 0.35-0.40
+            legendary: 0.40-0.45
     malachite:
         gem: gemstones.malachite
         name: "Malachite"
         colour: white
         socket_colour: Polished Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: physical_damage_reduction
-                min: 2.00
-                max: 2.20
-            rare:
-                stat: physical_damage_reduction
-                min: 2.30
-                max: 2.50
-            epic:
-                stat: physical_damage_reduction
-                min: 2.60
-                max: 2.80
-            legendary:
-                stat: physical_damage_reduction
-                min: 2.90
-                max: 3.00
+        stat: physical_damage_reduction
+        bands: tier-2
     zircon:
         gem: gemstones.zircon
         name: "Zircon"
         colour: white
         socket_colour: Polished Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: projectile_damage_reduction
-                min: 2.00
-                max: 2.20
-            rare:
-                stat: projectile_damage_reduction
-                min: 2.30
-                max: 2.50
-            epic:
-                stat: projectile_damage_reduction
-                min: 2.60
-                max: 2.80
-            legendary:
-                stat: projectile_damage_reduction
-                min: 2.90
-                max: 3.00
+        stat: projectile_damage_reduction
+        bands: tier-2
     apatite:
         gem: gemstones.apatite
         name: "Apatite"
         colour: white
         socket_colour: Polished Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: magic_damage_reduction
-                min: 2.00
-                max: 2.20
-            rare:
-                stat: magic_damage_reduction
-                min: 2.30
-                max: 2.50
-            epic:
-                stat: magic_damage_reduction
-                min: 2.60
-                max: 2.80
-            legendary:
-                stat: magic_damage_reduction
-                min: 2.90
-                max: 3.00
+        stat: magic_damage_reduction
+        bands: tier-2
     carnelian:
         gem: gemstones.carnelian
         name: "Carnelian"
         colour: white
         socket_colour: Polished Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: physical_damage
-                min: 3.00
-                max: 3.20
-            rare:
-                stat: physical_damage
-                min: 3.30
-                max: 3.50
-            epic:
-                stat: physical_damage
-                min: 3.60
-                max: 3.80
-            legendary:
-                stat: physical_damage
-                min: 3.90
-                max: 4.00
+        stat: physical_damage
+        bands: tier-3
     labradorite:
         gem: gemstones.labradorite
         name: "Labradorite"
         colour: white
         socket_colour: Polished Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: projectile_damage
-                min: 3.00
-                max: 3.20
-            rare:
-                stat: projectile_damage
-                min: 3.30
-                max: 3.50
-            epic:
-                stat: projectile_damage
-                min: 3.60
-                max: 3.80
-            legendary:
-                stat: projectile_damage
-                min: 3.90
-                max: 4.00
+        stat: projectile_damage
+        bands: tier-3
     sardonyx:
         gem: gemstones.sardonyx
         name: "Sardonyx"
         colour: white
         socket_colour: Polished Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: magic_damage
-                min: 3.00
-                max: 3.20
-            rare:
-                stat: magic_damage
-                min: 3.30
-                max: 3.50
-            epic:
-                stat: magic_damage
-                min: 3.60
-                max: 3.80
-            legendary:
-                stat: magic_damage
-                min: 3.90
-                max: 4.00
+        stat: magic_damage
+        bands: tier-3
     variscite:
         gem: gemstones.variscite
         name: "Variscite"
         colour: white
         socket_colour: Polished Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: spell_vampirism
-                min: 3.00
-                max: 3.20
-            rare:
-                stat: spell_vampirism
-                min: 3.30
-                max: 3.50
-            epic:
-                stat: spell_vampirism
-                min: 3.60
-                max: 3.80
-            legendary:
-                stat: spell_vampirism
-                min: 3.90
-                max: 4.00
+        stat: spell_vampirism
+        bands: tier-3
     wulfenite:
         gem: gemstones.wulfenite
         name: "Wulfenite"
         colour: white
         socket_colour: Polished Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: lifesteal
-                min: 3.00
-                max: 3.20
-            rare:
-                stat: lifesteal
-                min: 3.30
-                max: 3.50
-            epic:
-                stat: lifesteal
-                min: 3.60
-                max: 3.80
-            legendary:
-                stat: lifesteal
-                min: 3.90
-                max: 4.00
+        stat: lifesteal
+        bands: tier-3
     aquamarine:
         gem: gemstones.aquamarine
         name: "Aquamarine"
         colour: white
         socket_colour: Radiant Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: max_health
-                min: 1.00
-                max: 1.10
-            rare:
-                stat: max_health
-                min: 1.10
-                max: 1.20
-            epic:
-                stat: max_health
-                min: 1.20
-                max: 1.30
-            legendary:
-                stat: max_health
-                min: 1.40
-                max: 1.50
+        stat: max_health
+        bands:
+            common: 1.00-1.10
+            rare: 1.10-1.20
+            epic: 1.20-1.30
+            legendary: 1.40-1.50
     garnet:
         gem: gemstones.garnet
         name: "Garnet"
         colour: white
         socket_colour: Radiant Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: armor
-                min: 0.45
-                max: 0.50
-            rare:
-                stat: armor
-                min: 0.50
-                max: 0.55
-            epic:
-                stat: armor
-                min: 0.55
-                max: 0.60
-            legendary:
-                stat: armor
-                min: 0.60
-                max: 0.65
+        stat: armor
+        bands:
+            common: 0.45-0.50
+            rare: 0.50-0.55
+            epic: 0.55-0.60
+            legendary: 0.60-0.65
     opal:
         gem: gemstones.opal
         name: "Opal"
         colour: white
         socket_colour: Radiant Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: physical_damage_reduction
-                min: 3.00
-                max: 3.20
-            rare:
-                stat: physical_damage_reduction
-                min: 3.30
-                max: 3.50
-            epic:
-                stat: physical_damage_reduction
-                min: 3.60
-                max: 3.80
-            legendary:
-                stat: physical_damage_reduction
-                min: 3.90
-                max: 4.00
+        stat: physical_damage_reduction
+        bands: tier-3
     tanzanite:
         gem: gemstones.tanzanite
         name: "Tanzanite"
         colour: white
         socket_colour: Radiant Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: projectile_damage_reduction
-                min: 3.00
-                max: 3.20
-            rare:
-                stat: projectile_damage_reduction
-                min: 3.30
-                max: 3.50
-            epic:
-                stat: projectile_damage_reduction
-                min: 3.60
-                max: 3.80
-            legendary:
-                stat: projectile_damage_reduction
-                min: 3.90
-                max: 4.00
+        stat: projectile_damage_reduction
+        bands: tier-3
     moonstone:
         gem: gemstones.moonstone
         name: "Moonstone"
         colour: white
         socket_colour: Radiant Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: magic_damage_reduction
-                min: 3.00
-                max: 3.20
-            rare:
-                stat: magic_damage_reduction
-                min: 3.30
-                max: 3.50
-            epic:
-                stat: magic_damage_reduction
-                min: 3.60
-                max: 3.80
-            legendary:
-                stat: magic_damage_reduction
-                min: 3.90
-                max: 4.00
+        stat: magic_damage_reduction
+        bands: tier-3
     sunstone:
         gem: gemstones.sunstone
         name: "Sunstone"
         colour: white
         socket_colour: Radiant Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: physical_damage
-                min: 4.00
-                max: 4.20
-            rare:
-                stat: physical_damage
-                min: 4.30
-                max: 4.50
-            epic:
-                stat: physical_damage
-                min: 4.60
-                max: 4.80
-            legendary:
-                stat: physical_damage
-                min: 4.90
-                max: 5.00
+        stat: physical_damage
+        bands: tier-4
     spinel:
         gem: gemstones.spinel
         name: "Spinel"
         colour: white
         socket_colour: Radiant Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: projectile_damage
-                min: 4.00
-                max: 4.20
-            rare:
-                stat: projectile_damage
-                min: 4.30
-                max: 4.50
-            epic:
-                stat: projectile_damage
-                min: 4.60
-                max: 4.80
-            legendary:
-                stat: projectile_damage
-                min: 4.90
-                max: 5.00
+        stat: projectile_damage
+        bands: tier-4
     alexandrite:
         gem: gemstones.alexandrite
         name: "Alexandrite"
         colour: white
         socket_colour: Radiant Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: magic_damage
-                min: 4.00
-                max: 4.20
-            rare:
-                stat: magic_damage
-                min: 4.30
-                max: 4.50
-            epic:
-                stat: magic_damage
-                min: 4.60
-                max: 4.80
-            legendary:
-                stat: magic_damage
-                min: 4.90
-                max: 5.00
+        stat: magic_damage
+        bands: tier-4
     firestone:
         gem: gemstones.firestone
         name: "Direstone"
         colour: white
         socket_colour: Radiant Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: spell_vampirism
-                min: 4.00
-                max: 4.20
-            rare:
-                stat: spell_vampirism
-                min: 4.30
-                max: 4.50
-            epic:
-                stat: spell_vampirism
-                min: 4.60
-                max: 4.80
-            legendary:
-                stat: spell_vampirism
-                min: 4.90
-                max: 5.00
+        stat: spell_vampirism
+        bands: tier-4
     cloudstone:
         gem: gemstones.cloudstone
         name: "Cloudstone"
         colour: white
         socket_colour: Radiant Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: lifesteal
-                min: 4.00
-                max: 4.20
-            rare:
-                stat: lifesteal
-                min: 4.30
-                max: 4.50
-            epic:
-                stat: lifesteal
-                min: 4.60
-                max: 4.80
-            legendary:
-                stat: lifesteal
-                min: 4.90
-                max: 5.00
+        stat: lifesteal
+        bands: tier-4
     ruby:
         gem: gemstones.ruby
         name: "Ruby"
         colour: white
         socket_colour: Mythical Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: max_health
-                min: 1.50
-                max: 1.60
-            rare:
-                stat: max_health
-                min: 1.60
-                max: 1.70
-            epic:
-                stat: max_health
-                min: 1.70
-                max: 1.80
-            legendary:
-                stat: max_health
-                min: 1.80
-                max: 2.00
+        stat: max_health
+        bands:
+            common: 1.50-1.60
+            rare: 1.60-1.70
+            epic: 1.70-1.80
+            legendary: 1.80-2.00
     sapphire:
         gem: gemstones.sapphire
         name: "Sapphire"
         colour: white
         socket_colour: Mythical Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: armor
-                min: 0.65
-                max: 0.70
-            rare:
-                stat: armor
-                min: 0.70
-                max: 0.75
-            epic:
-                stat: armor
-                min: 0.75
-                max: 0.80
-            legendary:
-                stat: armor
-                min: 0.80
-                max: 1.00
+        stat: armor
+        bands:
+            common: 0.65-0.70
+            rare: 0.70-0.75
+            epic: 0.75-0.80
+            legendary: 0.80-1.00
     topaz:
         gem: gemstones.topaz
         name: "Topaz"
         colour: white
         socket_colour: Mythical Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: physical_damage_reduction
-                min: 4.00
-                max: 4.20
-            rare:
-                stat: physical_damage_reduction
-                min: 4.30
-                max: 4.50
-            epic:
-                stat: physical_damage_reduction
-                min: 4.60
-                max: 4.80
-            legendary:
-                stat: physical_damage_reduction
-                min: 4.90
-                max: 5.00
+        stat: physical_damage_reduction
+        bands: tier-4
     citrine:
         gem: gemstones.citrine
         name: "Citrine"
         colour: white
         socket_colour: Mythical Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: projectile_damage_reduction
-                min: 4.00
-                max: 4.20
-            rare:
-                stat: projectile_damage_reduction
-                min: 4.30
-                max: 4.50
-            epic:
-                stat: projectile_damage_reduction
-                min: 4.60
-                max: 4.80
-            legendary:
-                stat: projectile_damage_reduction
-                min: 4.90
-                max: 5.00
+        stat: projectile_damage_reduction
+        bands: tier-4
     morganite:
         gem: gemstones.morganite
         name: "Morganite"
         colour: white
         socket_colour: Mythical Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: magic_damage_reduction
-                min: 4.00
-                max: 4.2
-            rare:
-                stat: magic_damage_reduction
-                min: 4.30
-                max: 4.50
-            epic:
-                stat: magic_damage_reduction
-                min: 4.60
-                max: 4.80
-            legendary:
-                stat: magic_damage_reduction
-                min: 4.90
-                max: 5.00
+        stat: magic_damage_reduction
+        bands: tier-4
     crystallite:
         gem: gemstones.crystallite
         name: "Crystallite"
         colour: white
         socket_colour: Mythical Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: physical_damage
-                min: 5.00
-                max: 5.20
-            rare:
-                stat: physical_damage
-                min: 5.30
-                max: 5.50
-            epic:
-                stat: physical_damage
-                min: 5.60
-                max: 5.80
-            legendary:
-                stat: physical_damage
-                min: 5.90
-                max: 6.00
+        stat: physical_damage
+        bands: tier-5
     tigers_eye:
         gem: gemstones.tigers_eye
         name: "Tiger's Eye"
         colour: white
         socket_colour: Mythical Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: projectile_damage
-                min: 5.00
-                max: 5.20
-            rare:
-                stat: projectile_damage
-                min: 5.30
-                max: 5.50
-            epic:
-                stat: projectile_damage
-                min: 5.60
-                max: 5.80
-            legendary:
-                stat: projectile_damage
-                min: 5.90
-                max: 6.00
+        stat: projectile_damage
+        bands: tier-5
     serpents_eye:
         gem: gemstones.serpents_eye
         name: "Serpent's Eye"
         colour: white
         socket_colour: Mythical Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: magic_damage
-                min: 5.00
-                max: 5.20
-            rare:
-                stat: magic_damage
-                min: 5.30
-                max: 5.50
-            epic:
-                stat: magic_damage
-                min: 5.60
-                max: 5.80
-            legendary:
-                stat: magic_damage
-                min: 5.90
-                max: 6.00
+        stat: magic_damage
+        bands: tier-5
     musgravite:
         gem: gemstones.musgravite
         name: "Musgravite"
         colour: white
         socket_colour: Mythical Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: spell_vampirism
-                min: 5.00
-                max: 5.20
-            rare:
-                stat: spell_vampirism
-                min: 5.30
-                max: 5.50
-            epic:
-                stat: spell_vampirism
-                min: 5.60
-                max: 5.80
-            legendary:
-                stat: spell_vampirism
-                min: 5.90
-                max: 6.00
+        stat: spell_vampirism
+        bands: tier-5
     taaffeite:
         gem: gemstones.taaffeite
         name: "Taaffeite"
         colour: white
         socket_colour: Mythical Gemstone
         socket_name_colour: white
-        rarities:
-            common:
-                stat: lifesteal
-                min: 5.00
-                max: 5.20
-            rare:
-                stat: lifesteal
-                min: 5.30
-                max: 5.50
-            epic:
-                stat: lifesteal
-                min: 5.60
-                max: 5.80
-            legendary:
-                stat: lifesteal
-                min: 5.90
-                max: 6.00
+        stat: lifesteal
+        bands: tier-5
