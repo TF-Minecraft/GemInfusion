@@ -63,7 +63,9 @@ class GemStatBandsTest {
                 + "      rare: 0.5\n");
     assertEquals(
         List.of("common armor 1.0-1.2", "legendary armor 1.9-2.0"),
-        describe(GemStat.parseGem("onyx", c.getConfigurationSection("gems.onyx"), c.getConfigurationSection("stat-bands"))));
+        describe(
+            GemStat.parseGem(
+                "onyx", c.getConfigurationSection("gems.onyx"), c.getConfigurationSection("stat-bands"))));
     // A single number is a fixed stat.
     assertEquals(
         List.of("common max_health 0.2-0.3", "rare max_health 0.5-0.5"),
