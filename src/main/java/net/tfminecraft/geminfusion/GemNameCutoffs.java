@@ -10,11 +10,13 @@ import java.util.logging.Logger;
 /**
  * Infused gems are named after their rolled stat, not their drawn rarity. Each rarity's name goes to the same share
  * of a gem's possible results as its draw chance, best results first, so a better name never means a weaker gem.
+ * Results that tie on one stat keep one name; when the tie would push a rarer name past its share, the whole tie gets
+ * the lower name, so rarer names can fall slightly short of their chance but never go over it.
  * The shares are worked out at {@link D20Roll#nameReferenceModifier}; players above it get better names more often.
  */
 public final class GemNameCutoffs {
 
-	/** The lowest stat that earns a rarity's name. */
+	/** The lowest stat that earns a rarity's name; positive infinity when no result fits in its share. */
 	record Cutoff(GemRarity rarity, double from) {
 	}
 
@@ -89,29 +91,27 @@ public final class GemNameCutoffs {
 		for (int i = drawable.size() - 1; i > 0; i--) {
 			GemRarity rarity = drawable.get(i);
 			share += rarity.getChance() / total;
-			double from = nearestCutoff(chanceByStat, share);
+			double from = cutoff(chanceByStat, share);
 			gemCutoffs.add(new Cutoff(rarity, from));
-			summary.append(' ').append(rarity.getId()).append(" from ").append(from).append(',');
+			summary.append(' ').append(rarity.getId())
+					.append(from == Double.POSITIVE_INFINITY ? " never" : " from " + from).append(',');
 		}
 		GemRarity lowest = drawable.getFirst();
 		info(summary.append(' ').append(lowest.getId()).append(" below.").toString());
 		return new Names(gemCutoffs, lowest);
 	}
 
-	/** The stat whose results at or above it come closest to the share. Ties keep the higher stat. */
-	private static double nearestCutoff(TreeMap<Double, Double> chanceByStat, double share) {
-		double best = chanceByStat.firstKey();
-		double bestGap = Double.POSITIVE_INFINITY;
+	/** The lowest stat whose results at or above it still fit in the share; a tie that would go over is left out. */
+	private static double cutoff(TreeMap<Double, Double> chanceByStat, double share) {
+		double cutoff = Double.POSITIVE_INFINITY;
 		double atOrAbove = 0;
 		for (Map.Entry<Double, Double> entry : chanceByStat.entrySet()) {
 			atOrAbove += entry.getValue();
-			double gap = Math.abs(atOrAbove - share);
-			if (gap < bestGap - 1e-9) {
-				best = entry.getKey();
-				bestGap = gap;
+			if (atOrAbove <= share + 1e-9) {
+				cutoff = entry.getKey();
 			}
 		}
-		return best;
+		return cutoff;
 	}
 
 	private static GemStat block(Gemstone gem, GemRarity rarity) {

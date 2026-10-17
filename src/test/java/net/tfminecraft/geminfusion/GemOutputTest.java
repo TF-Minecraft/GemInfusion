@@ -204,13 +204,13 @@ class GemOutputTest {
     when(template.getStats())
         .thenReturn(
             List.of(
-                GemStat.parse("ruby", "common", config("stat: ATTACK_DAMAGE\nmin: 1\nmax: 2")),
+                GemStat.parse("ruby", "common", config("stat: ATTACK_DAMAGE\nmin: 1\nmax: 2.5")),
                 GemStat.parse("ruby", "legendary", config("stat: ATTACK_DAMAGE\nmin: 2\nmax: 3"))));
     when(template.getMMOItem()).thenReturn(mock(MMOItem.class, RETURNS_DEEP_STUBS));
     when(template.getName()).thenReturn("Ruby");
     GemNameCutoffs.load(List.of(template), List.of(common, legendary));
     try {
-      // A Flawless common (2.4) is among the best 10% of results; a fumbled legendary (1.6) is not.
+      // A Flawless common (3.0) is among the best 10% of results; a fumbled legendary (1.6) is not.
       D20Roll.die = () -> 20;
       ItemStack flawless = tagged(Material.DIAMOND);
       try (var constructed = live(m -> when(m.newBuilder().build()).thenReturn(flawless))) {

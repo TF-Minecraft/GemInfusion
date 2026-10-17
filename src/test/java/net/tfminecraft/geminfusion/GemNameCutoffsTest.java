@@ -79,15 +79,16 @@ class GemNameCutoffsTest {
     // A Flawless epic agate (0.60) beats a fumbled legendary one (0.40), so it gets the better name.
     assertSame(legendary, GemNameCutoffs.name(agate, epic, 0.6));
     assertSame(ConfigLoader.findRarityById("rare"), GemNameCutoffs.name(agate, legendary, 0.4));
-    assertSame(legendary, GemNameCutoffs.name(agate, epic, 0.5516));
-    assertSame(epic, GemNameCutoffs.name(agate, legendary, 0.5515));
+    // 0.5516 would take Legendary past its 3%, so that tie stays Epic.
+    assertSame(legendary, GemNameCutoffs.name(agate, epic, 0.5558));
+    assertSame(epic, GemNameCutoffs.name(agate, legendary, 0.5516));
     assertSame(ConfigLoader.findRarityById("rare"), GemNameCutoffs.name(agate, epic, 0.3347));
     assertSame(ConfigLoader.findRarityById("common"), GemNameCutoffs.name(agate, epic, 0.3346));
 
     double total = rarities.stream().mapToDouble(GemRarity::getChance).sum();
     for (Gemstone gem : ConfigLoader.loadedGems) {
-      // Better stats never get a lower name, and each name's share stays near its rarity's chance
-      // (results that tie on one stat can't be split, so up to 2.25 points off for the bundled gems).
+      // Better stats never get a lower name. Ties go to the lower name, so each rarity and the ones above it
+      // never take more than their chances, and each name stays within 3.1 points of its own chance.
       Map<GemRarity, Double> shares = new HashMap<>();
       int previousRank = -1;
       for (Map.Entry<Double, Double> result : results(gem, rarities, 0).entrySet()) {
@@ -97,9 +98,14 @@ class GemNameCutoffsTest {
         previousRank = rank;
         shares.merge(named, result.getValue(), Double::sum);
       }
-      for (GemRarity rarity : rarities) {
+      double target = 0;
+      double named = 0;
+      for (GemRarity rarity : rarities.reversed()) {
         double share = shares.getOrDefault(rarity, 0.0);
-        assertEquals(rarity.getChance() / total, share, 0.025, gem.getId() + " " + rarity.getId());
+        assertEquals(rarity.getChance() / total, share, 0.031, gem.getId() + " " + rarity.getId());
+        target += rarity.getChance() / total;
+        named += share;
+        assertTrue(named <= target + 1e-9, gem.getId() + " " + rarity.getId() + " and above");
       }
     }
   }
@@ -109,14 +115,29 @@ class GemNameCutoffsTest {
     List<GemRarity> rarities = List.of(rarity("common", 90), rarity("legendary", 10));
     Gemstone ruby = gem("ruby", "common", "ATTACK_DAMAGE", "1", "2", "legendary", "ATTACK_DAMAGE", "2", "3");
     GemNameCutoffs.load(List.of(ruby), rarities);
-    // At +0 the best 10% of results start at 2.4; at +5 legendary draws roll higher, so the cutoff rises.
-    assertSame(rarities.get(1), GemNameCutoffs.name(ruby, null, 2.4));
-    assertSame(rarities.get(0), GemNameCutoffs.name(ruby, null, 2.3999));
-    D20Roll.load(config("infusion:\n  name-reference-modifier: 5\n"));
-    assertEquals(5, D20Roll.nameReferenceModifier);
-    GemNameCutoffs.load(List.of(ruby), rarities);
-    assertSame(rarities.get(0), GemNameCutoffs.name(ruby, null, 2.4));
+    // At +0 the best 10% of results start at 2.4421 (2.4 ties a Flawless common and would go over).
+    // At +10 legendary draws roll higher, so the cutoff rises.
     assertSame(rarities.get(1), GemNameCutoffs.name(ruby, null, 2.4421));
+    assertSame(rarities.get(0), GemNameCutoffs.name(ruby, null, 2.4));
+    D20Roll.load(config("infusion:\n  name-reference-modifier: 10\n"));
+    assertEquals(10, D20Roll.nameReferenceModifier);
+    GemNameCutoffs.load(List.of(ruby), rarities);
+    assertSame(rarities.get(0), GemNameCutoffs.name(ruby, null, 2.4421));
+    assertSame(rarities.get(1), GemNameCutoffs.name(ruby, null, 2.7579));
+  }
+
+  @Test
+  void rarityWhoseBestTieIsTooBigIsNeverNamed() throws Exception {
+    Logger logger = mock(Logger.class);
+    InfusionMain.plugin = mock(InfusionMain.class);
+    when(InfusionMain.plugin.getLogger()).thenReturn(logger);
+    // With +19 every face but a natural 1 is Flawless, so 95% of results tie on the top stat.
+    D20Roll.load(config("infusion:\n  name-reference-modifier: 19\n"));
+    List<GemRarity> rarities = List.of(rarity("common", 90), rarity("legendary", 10));
+    Gemstone flat = gem("flat", "common", "ARMOR", "1", "2", "legendary", "ARMOR", "1", "2");
+    GemNameCutoffs.load(List.of(flat), rarities);
+    verify(logger).info("Gem 'flat' names: legendary never, common below.");
+    assertSame(rarities.get(0), GemNameCutoffs.name(flat, rarities.get(1), 2.4));
   }
 
   @Test
