@@ -7,7 +7,7 @@ GemInfusion gives gemstones rolled bonuses and turns them into a resource for eq
 ## Features
 
 - **Gem infusion** — process batches of gemstones using an infusion token, with station feedback as the infusion runs.
-- **Rarity and stat rolls** — gems range from common to legendary and provide bonuses such as health, armour, damage, or damage reduction according to their type.
+- **Rarity and stat rolls** — gems range from common to legendary and provide bonuses such as health, armour, damage, or damage reduction according to their type. A gem is named after how its rolled stat ranks, so a better rarity name never means a weaker gem.
 - **d20 rolls** — like `/roll`, a d20 plus a modifier from the player's base attribute. Intelligence sets where an infused gem's stat lands, and Dexterity sets a hidden craft roll that adjusts the jewellery stat. A natural 20 always gives the best result and a natural 1 the worst.
 - **Masterworks** — any gem piece finished with a perfect recipe and hits is a Masterwork, whatever the gem or the craft roll.
 - **Socketed equipment** — connects gems with MMOItems sockets and preserves rarity information through socketing and removal.
