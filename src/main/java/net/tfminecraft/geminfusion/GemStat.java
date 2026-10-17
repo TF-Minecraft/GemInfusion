@@ -44,34 +44,36 @@ public class GemStat {
 	 * Reads a gem's stat for each rarity. Compact shape: one {@code stat} for the gem and {@code bands}, either the
 	 * name of a set under the top-level {@code stat-bands} or a section of {@code <rarity>: min-max}. Older configs
 	 * list {@code rarities.<rarity>} blocks instead (see {@link #parse}), which still load.
+	 * Only keys written in this config count: Bukkit falls back to the bundled config.yml for missing keys, which
+	 * would hand an older server config the bundled bands (or empty sections made from them).
 	 */
 	public static List<GemStat> parseGem(String gemId, ConfigurationSection gem, ConfigurationSection statBands) {
 		List<GemStat> stats = new ArrayList<>();
-		if (gem.contains("bands")) {
-			if (gem.contains("rarities")) {
+		Object bandsValue = gem.get("bands", null);
+		if (bandsValue != null) {
+			if (gem.get("rarities", null) != null) {
 				warn("Gem '" + gemId + "' has both bands and rarities; using bands.");
 			}
-			String statId = gem.getString("stat");
+			String statId = gem.getString("stat", null);
 			if (statId == null || statId.isBlank()) {
 				warn("Gem '" + gemId + "' has bands but no stat, skipping its stats.");
 				return stats;
 			}
-			ConfigurationSection bands = gem.isConfigurationSection("bands") ? gem.getConfigurationSection("bands")
-					: statBands == null ? null : statBands.getConfigurationSection(gem.getString("bands"));
+			ConfigurationSection bands = bandsValue instanceof ConfigurationSection own ? own
+					: ownSection(statBands, String.valueOf(bandsValue));
 			if (bands == null) {
-				warn("Gem '" + gemId + "' uses unknown stat-bands set '" + gem.getString("bands")
-						+ "', skipping its stats.");
+				warn("Gem '" + gemId + "' uses unknown stat-bands set '" + bandsValue + "', skipping its stats.");
 				return stats;
 			}
 			for (String rarityId : bands.getKeys(false)) {
-				GemStat stat = parseRange(gemId, rarityId, statId, bands.getString(rarityId));
+				GemStat stat = parseRange(gemId, rarityId, statId, bands.getString(rarityId, null));
 				if (stat != null) {
 					stats.add(stat);
 				}
 			}
 			return stats;
 		}
-		ConfigurationSection rarities = gem.getConfigurationSection("rarities");
+		ConfigurationSection rarities = ownSection(gem, "rarities");
 		if (rarities == null) {
 			warn("Gem '" + gemId + "' has neither bands nor rarities, skipping its stats.");
 			return stats;
@@ -83,6 +85,11 @@ public class GemStat {
 			}
 		}
 		return stats;
+	}
+
+	/** The section written at this key of this config, ignoring the bundled defaults; null when there is none. */
+	static ConfigurationSection ownSection(ConfigurationSection parent, String key) {
+		return parent != null && parent.get(key, null) instanceof ConfigurationSection own ? own : null;
 	}
 
 	private static GemStat parseRange(String gemId, String rarityId, String statId, String text) {

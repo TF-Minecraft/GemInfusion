@@ -134,6 +134,31 @@ class GemStatBandsTest {
   }
 
   @Test
+  void serverConfigIgnoresTheBundledBandsItFallsBackTo() throws Exception {
+    // Bukkit's getConfig() uses the bundled config.yml as defaults for every key the server's file lacks.
+    var bundled = YamlConfiguration.loadConfiguration(new File("src/main/resources/config.yml"));
+    var older =
+        config(
+            "gems:\n"
+                + "  agate:\n"
+                + "    rarities:\n"
+                + "      common: {stat: max_health, min: 0.21, max: 0.31}\n"
+                + "  coral:\n"
+                + "    stat: physical_damage\n"
+                + "    bands: tier-2\n");
+    older.setDefaults(bundled);
+    var sets = GemStat.ownSection(older, "stat-bands");
+    assertNull(sets);
+    assertEquals(
+        List.of("common max_health 0.21-0.31"),
+        describe(GemStat.parseGem("agate", older.getConfigurationSection("gems.agate"), sets)));
+    // A set the server's file doesn't define is unknown, even though the bundled file has it.
+    assertTrue(GemStat.parseGem("coral", older.getConfigurationSection("gems.coral"), sets).isEmpty());
+    verify(logger).warning(contains("unknown stat-bands set 'tier-2'"));
+    verify(logger, never()).warning(contains("both bands and rarities"));
+  }
+
+  @Test
   void bundledConfigGivesEveryGemFourBandsOfOneStat() {
     new ConfigLoader()
         .loadConfig(YamlConfiguration.loadConfiguration(new File("src/main/resources/config.yml")));
