@@ -186,8 +186,11 @@ public class InfusionEvents implements Listener{
 								for (Gemstone gem : b.getCurrentItems()) {
 									GemRarity rarity = getRarity();
 									ItemStack output = Objects.requireNonNull(getInfusedGem(p, gem, b.getCurrentItems().size(), rarity), "Cannot build infused gem");
-									String announcement = rarity.shouldAnnounce()
-											? "§e" + p.getName() + " just infused a " + rarity.getName() + " " + gem.getColour() + gem.getName() + "§e Gemstone" : "";
+									// Announce the rarity the gem is named after, which can differ from the drawn one.
+									GemRarity named = ConfigLoader.findRarityById(GemRarityPdc.read(output));
+									if (named == null) named = rarity;
+									String announcement = named.shouldAnnounce()
+											? "§e" + p.getName() + " just infused a " + named.getName() + " " + gem.getColour() + gem.getName() + "§e Gemstone" : "";
 									prepared.add(new InfusionBlock.Drop(output, announcement));
 								}
 							} catch (RuntimeException invalidBatch) {

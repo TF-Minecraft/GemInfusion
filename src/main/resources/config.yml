@@ -39,6 +39,12 @@ d20:
     flawless-dc: 20
     # How far the spread reaches past each rarity's min and max, in percent.
     spread-percent: 20
+    # A gem is named after how its stat ranks among every result it could have rolled, not after the drawn
+    # rarity, so a better name never means a weaker gem. Each name goes to the same share of results as its
+    # rarity's chance, worked out for this d20 modifier (0 is Intelligence 10-11 in the table above); players
+    # above it get better names more often.
+    # The cutoffs for each gem are logged when the config loads.
+    name-reference-modifier: 0
   # Goldsmithing: one craft roll when a gem piece is finished. It only moves the jewelry stat and is not
   # shown to the player. The quality, Masterwork included, comes from the recipe and hits alone.
   goldsmithing:
@@ -49,6 +55,8 @@ d20:
   # Dev testing only: 1-20 makes every roll that natural number. 0 rolls for real.
   force-natural: 0
 
+# List rarities from lowest to highest. chance is how often each is drawn, and also the share of gems
+# named after it.
 rarities:
     common:
         name: "§aCommon"

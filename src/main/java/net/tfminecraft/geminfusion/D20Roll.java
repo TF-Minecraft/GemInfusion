@@ -28,6 +28,8 @@ public final class D20Roll {
 	public static String infusionAttribute = "intelligence";
 	public static int flawlessDc = 20;
 	public static double spreadPercent = 20;
+	/** The modifier the infused-gem name shares are worked out at; see {@link GemNameCutoffs}. */
+	public static int nameReferenceModifier = 0;
 	public static String goldsmithAttribute = "dexterity";
 	public static double percentPerPoint = 2;
 	public static double maxPercent = 20;
@@ -123,6 +125,7 @@ public final class D20Roll {
 		infusionAttribute = "intelligence";
 		flawlessDc = 20;
 		spreadPercent = 20;
+		nameReferenceModifier = 0;
 		goldsmithAttribute = "dexterity";
 		percentPerPoint = 2;
 		maxPercent = 20;
@@ -150,6 +153,7 @@ public final class D20Roll {
 				spread = clamped;
 			}
 			spreadPercent = spread;
+			nameReferenceModifier = section.getInt("infusion.name-reference-modifier", nameReferenceModifier);
 			goldsmithAttribute = section.getString("goldsmithing.attribute", goldsmithAttribute);
 			percentPerPoint = section.getDouble("goldsmithing.percent-per-point", percentPerPoint);
 			maxPercent = section.getDouble("goldsmithing.max-percent", maxPercent);

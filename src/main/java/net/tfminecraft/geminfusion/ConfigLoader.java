@@ -43,6 +43,7 @@ public class ConfigLoader {
 			loadedRarities.add(new GemRarity(key, config.getConfigurationSection("rarities."+key)));
 		}
 		D20Roll.load(config.getConfigurationSection("d20"));
+		GemNameCutoffs.load(loadedGems, loadedRarities);
 	}
 	// Keep the existing legacy text representation, formatting, and exact-string comparisons.
 	@SuppressWarnings("deprecation")

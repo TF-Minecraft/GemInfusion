@@ -28,7 +28,9 @@ public final class InfusedGemBuilder {
 	private InfusedGemBuilder() {
 	}
 
-	public static void rollStats(MMOItem mmo, Gemstone gem, GemRarity rarity, int infusionAmount, Player player) {
+	/** Returns the rolled stat, or NaN when the gem has no usable stat for this rarity. */
+	public static double rollStats(MMOItem mmo, Gemstone gem, GemRarity rarity, int infusionAmount, Player player) {
+		double statAmount = Double.NaN;
 		GemStat block = null;
 		for (GemStat statBlock : gem.getStats()) {
 			if (statBlock.getId().equalsIgnoreCase(rarity.getId())) {
@@ -44,7 +46,7 @@ public final class InfusedGemBuilder {
 			} else {
 				// d20 + Intelligence picks the spot in the rarity's spread; the DC or a natural 20 makes it Flawless.
 				D20Roll roll = D20Roll.roll(player, D20Roll.infusionAttribute);
-				double statAmount = D20Roll.gemStat(block, roll.position(D20Roll.flawlessDc));
+				statAmount = D20Roll.gemStat(block, roll.position(D20Roll.flawlessDc));
 				mmo.setData(stat, new DoubleData(statAmount));
 			}
 		}
@@ -54,6 +56,7 @@ public final class InfusedGemBuilder {
 			maxChance = 0.0;
 		}
 		mmo.setData(ItemStats.SUCCESS_RATE, new DoubleData(Math.floor(Math.random() * maxChance) + 40));
+		return statAmount;
 	}
 
 	/** A null rarity (unknown after a reset) leaves the rarity out of the name and lore. */
@@ -114,12 +117,14 @@ public final class InfusedGemBuilder {
 		return applyCosmeticsToItem(item, gem, rarity);
 	}
 
+	/** The drawn rarity sets the stat's range; the gem is named after where the rolled stat ranks. */
 	public static ItemStack buildInfusedGem(Gemstone gem, GemRarity rarity, int infusionAmount, Player player) {
 		ItemStack blankGem = gem.getMMOItem().newBuilder().build();
 		MMOItem infusedGem = new LiveMMOItem(NBTItem.get(blankGem));
-		rollStats(infusedGem, gem, rarity, infusionAmount, player);
-		applyCosmetics(infusedGem, gem, rarity);
-		return finalizeItem(infusedGem.newBuilder().build(), rarity.getId());
+		double stat = rollStats(infusedGem, gem, rarity, infusionAmount, player);
+		GemRarity named = GemNameCutoffs.name(gem, rarity, stat);
+		applyCosmetics(infusedGem, gem, named);
+		return finalizeItem(infusedGem.newBuilder().build(), named.getId());
 	}
 
 	public static ItemStack finalizeItem(ItemStack item, String rarityId) {

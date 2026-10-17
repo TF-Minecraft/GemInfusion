@@ -127,6 +127,7 @@ class D20RollTest {
             "attribute-modifiers:\n  0: -2\n  10: 1\n  x: 9\n"
                 + "force-natural: 7\n"
                 + "infusion:\n  attribute: wisdom\n  flawless-dc: 18\n  spread-percent: 10\n"
+                + "  name-reference-modifier: 2\n"
                 + "goldsmithing:\n  attribute: strength\n"
                 + "  percent-per-point: 3\n  max-percent: 30\n"));
     assertEquals(-2, D20Roll.modifier(0));
@@ -135,6 +136,7 @@ class D20RollTest {
     assertEquals("wisdom", D20Roll.infusionAttribute);
     assertEquals(18, D20Roll.flawlessDc);
     assertEquals(10, D20Roll.spreadPercent);
+    assertEquals(2, D20Roll.nameReferenceModifier);
     assertEquals("strength", D20Roll.goldsmithAttribute);
     assertEquals(3, D20Roll.percentPerPoint);
     assertEquals(30, D20Roll.maxPercent);
@@ -143,6 +145,7 @@ class D20RollTest {
     D20Roll.load(config("attribute-modifiers:\n  x: 9\nforce-natural: 25\n"));
     assertEquals(5, D20Roll.modifier(20));
     assertEquals("intelligence", D20Roll.infusionAttribute);
+    assertEquals(0, D20Roll.nameReferenceModifier);
     for (int i = 0; i < 200; i++) {
       int natural = D20Roll.die.getAsInt();
       assertTrue(natural >= 1 && natural <= 20, String.valueOf(natural));

@@ -278,6 +278,46 @@ class InfusionEventsTest {
   }
 
   @Test
+  void announcementFollowsTheRarityTheGemIsNamedAfter() {
+    InfusionBlock s = station(location, 2, 4);
+    when(nbt.getType()).thenReturn("STAFF");
+    when(nbt.getString("MMOITEMS_ITEM_ID")).thenReturn("INFUSER");
+    GemRarity drawn = mock(GemRarity.class);
+    when(drawn.getId()).thenReturn("common");
+    when(drawn.getChance()).thenReturn(1.0);
+    GemRarity named = mock(GemRarity.class);
+    when(named.getId()).thenReturn("legendary");
+    when(named.getName()).thenReturn("Legendary");
+    when(named.shouldAnnounce()).thenReturn(true);
+    ConfigLoader.loadedRarities.add(drawn);
+    ConfigLoader.loadedRarities.add(named);
+    InfusionMain previous = InfusionMain.plugin;
+    InfusionMain.plugin = mock(InfusionMain.class);
+    ItemStack promoted = mock(ItemStack.class);
+    ItemStack plain = mock(ItemStack.class);
+    try (var bukkit = mockStatic(Bukkit.class);
+        var builder = mockStatic(InfusedGemBuilder.class);
+        var pdc = mockStatic(GemRarityPdc.class)) {
+      bukkit.when(Bukkit::getScheduler).thenReturn(mock(BukkitScheduler.class));
+      builder
+          .when(() -> InfusedGemBuilder.buildInfusedGem(gem, drawn, 2, player))
+          .thenReturn(promoted, plain);
+      pdc.when(() -> GemRarityPdc.read(promoted)).thenReturn("legendary");
+      pdc.when(() -> GemRarityPdc.read(plain)).thenReturn("common");
+      when(player.getName()).thenReturn("Fran");
+      events.infuseHitEvent(event(Action.LEFT_CLICK_BLOCK, EquipmentSlot.HAND));
+      // The drawn common never announces; the gem named Legendary does.
+      assertEquals(2, s.pendingDrops.size());
+      assertEquals(
+          "§eFran just infused a Legendary " + ChatColor.RED + "Ruby§e Gemstone",
+          s.pendingDrops.get(0).announcement());
+      assertEquals("", s.pendingDrops.get(1).announcement());
+    } finally {
+      InfusionMain.plugin = previous;
+    }
+  }
+
+  @Test
   void failedDepositCheckpointKeepsNewAndExistingGemsInHand() {
     when(store.save(any())).thenReturn(false);
     events.addGemEvent(event(Action.RIGHT_CLICK_BLOCK, EquipmentSlot.HAND));
